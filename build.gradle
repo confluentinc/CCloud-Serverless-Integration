@@ -1,0 +1,92 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        maven {
+            url = uri("https://packages.confluent.io/maven/")
+        }
+        maven {
+            url = uri("https://plugins.gradle.org/m2/")
+        }
+        maven {
+            url = uri("https://jitpack.io")
+        }
+    }
+}
+
+
+plugins {
+    id 'idea'
+    id 'eclipse'
+    id "com.google.protobuf" version "0.8.17"
+    id "com.github.imflog.kafka-schema-registry-gradle-plugin" version "1.1.1"
+    id "com.github.davidmc24.gradle.plugin.avro" version "1.0.0"
+}
+
+group 'io.confluent.developer'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
+
+repositories {
+    mavenCentral()
+    maven {
+        url = uri("https://packages.confluent.io/maven/")
+    }
+
+    maven {
+        url = uri("https://jitpack.io")
+    }
+}
+
+dependencies {
+    implementation platform('software.amazon.awssdk:bom:2.10.73')
+    implementation 'software.amazon.awssdk:lambda'
+    implementation 'org.apache.kafka:kafka-clients:2.8.0'
+    implementation 'com.amazonaws:aws-lambda-java-core:1.2.1'
+    implementation 'com.amazonaws:aws-lambda-java-events:3.6.0'
+    implementation 'software.amazon.awssdk:secretsmanager:2.17.15'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.4'
+    implementation 'com.google.code.gson:gson:2.8.6'
+    implementation 'org.apache.logging.log4j:log4j-api:2.13.0'
+    implementation 'org.apache.logging.log4j:log4j-core:2.13.0'
+
+    implementation 'com.google.protobuf:protobuf-java:3.15.3'
+    implementation "org.apache.avro:avro:1.10.0"
+    implementation('org.apache.kafka:kafka-clients:2.8.0!!')
+    implementation('io.confluent:kafka-streams-avro-serde:6.1.1') {
+        exclude group: 'org.apache.kafka', module: 'kafka-clients'
+        exclude group: 'org.apache.kafka', module: 'kafka-streams'
+    }
+    implementation('io.confluent:kafka-streams-protobuf-serde:6.1.1') {
+        exclude group: 'org.apache.kafka', module: 'kafka-clients'
+        exclude group: 'org.apache.kafka', module: 'kafka-streams'
+    }
+    implementation "io.confluent:kafka-avro-serializer:6.1.1"
+    implementation "io.confluent:kafka-protobuf-serializer:6.1.1"
+    implementation "io.confluent:kafka-protobuf-provider:6.1.1"
+
+
+    runtimeOnly 'org.apache.logging.log4j:log4j-slf4j18-impl:2.13.0'
+    runtimeOnly 'com.amazonaws:aws-lambda-java-log4j2:1.2.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+}
+
+protobuf {
+    generatedFilesBaseDir = "${project.buildDir}/generated-main-proto-java"
+
+    protoc {
+        artifact = 'com.google.protobuf:protoc:3.15.3'
+    }
+}
+
+
+
+task buildZip(type: Zip) {
+    from compileJava
+    from processResources
+    into('lib') {
+        from configurations.runtimeClasspath
+    }
+}

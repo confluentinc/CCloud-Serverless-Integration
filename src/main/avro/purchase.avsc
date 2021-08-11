@@ -1,0 +1,23 @@
+{
+  "type":"record",
+  "namespace": "io.confluent.developer.avro",
+  "name":"Purchase",
+  "fields": [
+    {"name": "item", "type":"string"},
+    {"name": "amount", "type": "double"},
+    {"name": "customer_id", "type": "string"},
+    {"name": "duration",
+    "type" : { "type" : "long",
+               "logicalType" : "timestamp-millis" }
+    },
+    {"name": "date",
+        "type" : { "type" : "int",
+                   "logicalType" : "date" }
+        },
+
+    {"name": "timestamp_micros",
+            "type" : { "type" : "long",
+                       "logicalType" : "timestamp-micros" }
+            }
+  ]
+}
