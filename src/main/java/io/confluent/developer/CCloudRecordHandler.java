@@ -39,11 +39,11 @@ public class CCloudRecordHandler implements RequestHandler<Map<String, Object>, 
 
     public CCloudRecordHandler() {
         configs.putAll(getSecretsConfigs());
-        configs.put("security.protocol", "SASL_SSL");
         final String username = (String) configs.get("username");
         final String password = (String) configs.get("password");
         String jaasConfig = String.format("org.apache.kafka.common.security.plain.PlainLoginModule   required username='%s'   password='%s';", username, password);
         configs.put("sasl.jaas.config", jaasConfig);
+        configs.put("security.protocol", "SASL_SSL");
         configs.put("sasl.mechanism", "PLAIN");
         configs.put("basic.auth.credentials.source", "USER_INFO");
         configs.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
