@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package io.confluent.developer.proto;
+option java_outer_classname = "TradeSettlementProto";
+
+
+
+message TradeSettlement {
+  string user = 1;
+  string symbol = 2;
+  double amount = 3;
+  string disposition = 4;
+  string reason = 5;
+  int64 timestamp = 6;
+}
