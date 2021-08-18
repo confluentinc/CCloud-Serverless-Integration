@@ -1,7 +1,7 @@
 -- noinspection SqlDialectInspectionForFile
 -- noinspection SqlNoDataSourceInspectionForFile
 
-CREATE STREAM TRADE-SETTLEMENT (
+CREATE STREAM TRADE_SETTLEMENT (
       user varchar,
       symbol varchar,
       amount double,
