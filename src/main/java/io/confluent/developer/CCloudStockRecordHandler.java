@@ -28,6 +28,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -63,38 +64,39 @@ public class CCloudStockRecordHandler implements RequestHandler<Map<String, Obje
         Map<String, List<Map<String, Object>>> records = (Map<String, List<Map<String, Object>>>) payload.get("records");
 
         records.forEach((key, recordList) -> recordList.forEach(recordMap -> {
-            byte[] bytes = decode(recordMap, "value");
+            byte[] keyBytes;
+            String tradeKey = null;
+            if (recordMap.containsKey("key")) {
+                keyBytes = decode((String)recordMap.get("key"));
+                tradeKey = stringDeserializer.deserialize("", keyBytes);
+            }
+            byte[] bytes = decode((String)recordMap.get("value"));
             Map<String, Object> trade = getMapFromString(stringDeserializer.deserialize("", bytes));
-            logger.log("Trade is " + trade);
+            logger.log("Key is " + tradeKey + " Record is " + trade);
             Instant now = Instant.now();
             int secInspection = new Random().nextInt(100);
             Builder builder = TradeSettlement.newBuilder();
             int shares = (Integer)trade.get("QUANTITY");
             int price = (Integer)trade.get("PRICE");
             builder.setAmount(((double)shares * price));
-            String user =  (String)trade.get("USERID");
-            if (user != null) {
-                builder.setUser(user);
-            } else {
-                builder.setUser("NO USER");
-            }
+            builder.setUser(Objects.requireNonNullElse(tradeKey, "NO USER"));
             builder.setSymbol((String)trade.get("SYMBOL"));
             builder.setTimestamp(now.toEpochMilli());
             String disposition;
             String reason;
             
             if (builder.getUser().equals("NO USER")) {
-                disposition = "rejected";
+                disposition = "Rejected";
                 reason = "No user account specified";
-            } else if (builder.getAmount() > 10000) {
-                disposition = "pending";
-                reason = "large trade";
+            } else if (builder.getAmount() > 100000) {
+                disposition = "Pending";
+                reason = "Large trade";
             } else if (secInspection < 30) {
                 disposition = "SEC Flagged";
                 reason = "This trade looks sus";
             } else {
-               disposition = "completed";
-               reason = "within same day limit";
+               disposition = "Completed";
+               reason = "Within same day limit";
             }
             builder.setDisposition(disposition);
             builder.setReason(reason);
@@ -102,7 +104,7 @@ public class CCloudStockRecordHandler implements RequestHandler<Map<String, Obje
             TradeSettlement tradeSettlement = builder.build();
 
             logger.log("Trade Settlement result " + tradeSettlement);
-            ProducerRecord<String, TradeSettlement> settlementRecord = new ProducerRecord<>("trade-settlements", tradeSettlement);
+            ProducerRecord<String, TradeSettlement> settlementRecord = new ProducerRecord<>("trade-settlements", tradeSettlement.getSymbol(), tradeSettlement);
             tradeSettlementFutures.add(producer.send(settlementRecord));
         })
         );
@@ -123,8 +125,8 @@ public class CCloudStockRecordHandler implements RequestHandler<Map<String, Obje
         return null;
     }
 
-    private byte[] decode(final Map<String, Object> map, final String key) {
-        return Base64.getDecoder().decode((String) map.get(key));
+    private byte[] decode(final String encoded) {
+        return Base64.getDecoder().decode(encoded);
     }
 
     private <K,V> Map<K, V> getMapFromString(final String value)  {
@@ -142,16 +144,13 @@ public class CCloudStockRecordHandler implements RequestHandler<Map<String, Obje
         SecretsManagerClient client = SecretsManagerClient.builder()
                 .region(region)
                 .build();
-
         String secret;
         GetSecretValueRequest getSecretValueRequest = GetSecretValueRequest.builder()
                 .secretId(secretName)
                 .build();
         GetSecretValueResponse getSecretValueResponse;
-
         try {
             getSecretValueResponse = client.getSecretValue(getSecretValueRequest);
-
             if (getSecretValueResponse.secretString() != null) {
                 secret = getSecretValueResponse.secretString();
             } else {
