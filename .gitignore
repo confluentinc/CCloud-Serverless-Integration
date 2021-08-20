@@ -45,3 +45,8 @@ hs_err_pid*
 
 src/main/resources/confluent.properties
 src/main/resources/sample_input.json
+scratch.txt
+aws-cli/configs.sh
+aws-cli/*results.json
+aws-cli/aws-ccloud-creds.json
+
