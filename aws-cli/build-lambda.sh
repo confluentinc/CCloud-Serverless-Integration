@@ -38,6 +38,6 @@ aws lambda create-event-source-mapping --profile "${PROFILE}" --region "${REGION
     --topics lambda-test-input \
     --source-access-configuration Type=BASIC_AUTH,URI=arn:aws:secretsmanager:us-west-2:343223495109:secret:"${CREDS_NAME}" \
     --function-name arn:aws:lambda:us-west-2:343223495109:function:"${FUNCTION_NAME}" \
-    --self-managed-event-source '{"Endpoints":{"KAFKA_BOOTSTRAP_SERVERS":["pkc-pgq85.us-west-2.aws.confluent.cloud:9092"]}}'
+    --self-managed-event-source '{"Endpoints":{"KAFKA_BOOTSTRAP_SERVERS":["'${BOOTSTRAP_SERVERS}'"]}}'  | tee -a aws-results.json
 
 
