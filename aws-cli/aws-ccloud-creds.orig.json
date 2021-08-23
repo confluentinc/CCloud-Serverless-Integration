@@ -1,7 +1,0 @@
-{
-  "username": "<USERNAME>",
-  "password": "<PASSWORD>",
-  "schema.registry.url": "<SR URL>",
-  "basic.auth.user.info": "<SR USERNAME:SR PASSWORD>",
-  "bootstrap.servers": "<BOOTSTRAP SERVERS>"
-}
