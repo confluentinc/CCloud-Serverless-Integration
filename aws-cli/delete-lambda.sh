@@ -10,10 +10,10 @@
 # clean out results file from any previous runs
 true > aws-results.json
 
-echo "Update the Lambda code"
-aws lambda update-function-code --profile "${PROFILE}" --region "${REGION}" \
+echo "Delete the Lambda "
+aws lambda delete --profile "${PROFILE}" --region "${REGION}" \
     --function-name "${FUNCTION_NAME}" \
-    --zip-file fileb://../build/distributions/confluent-lambda-serverless-1.0-SNAPSHOT.zip | tee -a aws-results.json
+    | tee aws-results.json
 
 
 
