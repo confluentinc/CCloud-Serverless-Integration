@@ -20,15 +20,6 @@
         "xray:GetSamplingStatisticSummaries"
       ],
       "Resource": "*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "s3:GetObject",
-        "s3:PutObject",
-        "s3:DeleteObject"
-      ],
-      "Resource": "arn:aws:s3:::*"
     }
   ]
 }

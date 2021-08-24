@@ -41,13 +41,6 @@ public class CCloudStockRecordHandler implements RequestHandler<Map<String, Obje
 
     public CCloudStockRecordHandler() {
         configs.putAll(getSecretsConfigs());
-        final String username = (String) configs.get("username");
-        final String password = (String) configs.get("password");
-        String jaasConfig = String.format("org.apache.kafka.common.security.plain.PlainLoginModule   required username='%s'   password='%s';", username, password);
-        configs.put("sasl.jaas.config", jaasConfig);
-        configs.put("security.protocol", "SASL_SSL");
-        configs.put("sasl.mechanism", "PLAIN");
-        configs.put("basic.auth.credentials.source", "USER_INFO");
         configs.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         configs.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaProtobufSerializer.class);
         
@@ -139,7 +132,7 @@ public class CCloudStockRecordHandler implements RequestHandler<Map<String, Obje
     }
 
     private Map<String, String> getSecretsConfigs() {
-        String secretName = "CCloudKey";
+        String secretName = "CCloudLambdaCreds";
         Region region = Region.of("us-west-2");
         SecretsManagerClient client = SecretsManagerClient.builder()
                 .region(region)
