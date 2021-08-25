@@ -95,13 +95,24 @@ class PropertiesToJsonTask extends DefaultTask {
     @TaskAction
     def propsToJson() {
         ObjectMapper objectMapper = new ObjectMapper();
-        java.nio.file.Path sourcePropertiesPath = Paths.get("src/main/resources/confluent.properties");
-        java.nio.file.Path destinationJsonPath = Paths.get("aws-cli/aws-ccloud-creds.json");
         Properties properties = new Properties();
-        try (FileInputStream fis = new FileInputStream(sourcePropertiesPath.toFile())) {
+        try (FileInputStream fis = new FileInputStream("src/main/resources/confluent.properties")) {
             properties.load(fis);
         }
-        objectMapper.writerWithDefaultPrettyPrinter().writeValue(destinationJsonPath.toFile(), properties);
+        // Taking these out because they aren't sensitive values plus we want the same entries between different deployments
+        ["security.protocol", "sasl.mechanism", "client.dns.lookup",
+         "acks", "basic.auth.credentials.source"].forEach(k -> properties.remove(k))
+        String saslConfig = properties.get("sasl.jaas.config")
+        // We're doing this because the AWS security manager wants a separate username and password entry for configuring the event source
+        def matcher = saslConfig =~ /.*username='([^']*)'.*password='([^']*)'.*/
+        if (matcher.find()) {
+            properties.put("username", matcher.group(1))
+            properties.put("password", matcher.group(2))
+        } else {
+            throw new RuntimeException("AWS security manager requires 'username' and 'password' entries ")
+        }
+        File destinationJsonFile = new File("aws-cli/aws-ccloud-creds.json")
+        objectMapper.writerWithDefaultPrettyPrinter().writeValue(destinationJsonFile, properties);
     }
 }
 
