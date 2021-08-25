@@ -44,7 +44,9 @@ hs_err_pid*
 .idea/
 
 src/main/resources/confluent.properties
-src/main/resources/sample_input.json
+src/main/resources/stocktrade-datagen.json
+src/main/resources/user-datagen.json
+src/main/resources/ksql-start-command.txt
 scratch.txt
 aws-cli/configs.sh
 aws-cli/*results.json

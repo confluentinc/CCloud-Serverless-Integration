@@ -1,5 +1,6 @@
 import com.fasterxml.jackson.databind.ObjectMapper
 import java.nio.file.Paths
+import java.nio.file.Files
 
 buildscript {
     repositories {
@@ -44,13 +45,13 @@ repositories {
 
 dependencies {
     implementation platform('software.amazon.awssdk:bom:2.10.73')
-    implementation 'software.amazon.awssdk:lambda:2.17.19'
+    implementation 'software.amazon.awssdk:lambda:2.17.24'
     implementation 'org.apache.kafka:kafka-clients:2.8.0'
     implementation 'com.amazonaws:aws-lambda-java-core:1.2.1'
     implementation 'com.amazonaws:aws-lambda-java-events:3.9.0'
-    implementation 'software.amazon.awssdk:secretsmanager:2.17.19'
+    implementation 'software.amazon.awssdk:secretsmanager:2.17.24'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.4'
-    implementation 'com.google.code.gson:gson:2.8.7'
+    implementation 'com.google.code.gson:gson:2.8.8'
     implementation 'org.apache.logging.log4j:log4j-api:2.14.1'
     implementation 'org.apache.logging.log4j:log4j-core:2.14.1'
 
@@ -94,6 +95,7 @@ protobuf {
 class PropertiesToJsonTask extends DefaultTask {
     @TaskAction
     def propsToJson() {
+        Map<String, String> baseDatagenConfigs = ["connector.class":"DatagenSource", "output.data.format":"JSON", "tasks.max":"1"]
         ObjectMapper objectMapper = new ObjectMapper();
         Properties properties = new Properties();
         try (FileInputStream fis = new FileInputStream("src/main/resources/confluent.properties")) {
@@ -105,14 +107,37 @@ class PropertiesToJsonTask extends DefaultTask {
         String saslConfig = properties.get("sasl.jaas.config")
         // We're doing this because the AWS security manager wants a separate username and password entry for configuring the event source
         def matcher = saslConfig =~ /.*username='([^']*)'.*password='([^']*)'.*/
+        def ksqlStartCmnd = ""
+        def ksqlFormatted = '''ccloud ksql app create ksqlDBLambdaIntegration --api-key %s --api-secret %s'''
         if (matcher.find()) {
-            properties.put("username", matcher.group(1))
-            properties.put("password", matcher.group(2))
+            String username = matcher.group(1)
+            String password = matcher.group(2)
+            properties.put("username", username)
+            properties.put("password", password)
+            baseDatagenConfigs.put("kafka.api.key", username)
+            baseDatagenConfigs.put("kafka.api.secret", password)
+            ksqlStartCmnd =  String.format(ksqlFormatted, username, password)
         } else {
             throw new RuntimeException("AWS security manager requires 'username' and 'password' entries ")
         }
+
+        Map<String, String> stocktradeConfigs = new HashMap<>(baseDatagenConfigs)
+        stocktradeConfigs.put("quickstart", "STOCK_TRADES")
+        stocktradeConfigs.put("kafka.topic", "stocktrade")
+        stocktradeConfigs.put("name","StockTradeDatagen")
+        Map<String, String> userConfigs = new HashMap<>(baseDatagenConfigs)
+        userConfigs.put("quickstart", "USERS")
+        userConfigs.put("kafka.topic", "stock_users")
+        userConfigs.put("name", "UsersDatagen")
+
         File destinationJsonFile = new File("aws-cli/aws-ccloud-creds.json")
-        objectMapper.writerWithDefaultPrettyPrinter().writeValue(destinationJsonFile, properties);
+        File stocktradeDatagenJsonFile = new File("src/main/resources/stocktrade-datagen.json")
+        File userDatagenJsonFile = new File("src/main/resources/user-datagen.json")
+        
+        objectMapper.writerWithDefaultPrettyPrinter().writeValue(destinationJsonFile, properties)
+        objectMapper.writerWithDefaultPrettyPrinter().writeValue(stocktradeDatagenJsonFile, stocktradeConfigs)
+        objectMapper.writerWithDefaultPrettyPrinter().writeValue(userDatagenJsonFile, userConfigs)
+        Files.writeString(Paths.get("src/main/resources/ksql-start-command.txt"), ksqlStartCmnd)
     }
 }
 

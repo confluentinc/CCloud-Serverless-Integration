@@ -7,18 +7,16 @@
 # event source for the Lambda.  You really only need to run
 # this script once.  If you need to update the Lambda code
 # you'll want to run ./gradlew clean build buildZip
-# then run the update-lambda-code.sh script 
-
-# clean out results file from any previous runs
-true > aws-results.json
+# then run the update-lambda-code.sh script
 
 echo "Create the lambda"
 aws lambda  create-function --profile "${PROFILE}" --region "${REGION}" \
   --function-name "${FUNCTION_NAME}" \
   --memory-size 512 \
+  --timeout 600 \
   --zip-file fileb://../build/distributions/confluent-lambda-serverless-1.0-SNAPSHOT.zip \
-  --handler io.confluent.developer.CCloudRecordHandler::handleRequest \
-  --runtime java11  --role arn:aws:iam::343223495109:role/"${ROLE_NAME}" | tee aws-results.json
+  --handler io.confluent.developer.CCloudStockRecordHandler::handleRequest \
+  --runtime java11  --role arn:aws:iam::343223495109:role/"${ROLE_NAME}" | tee -a aws-results.json
 
 echo "Adding a CCloud topic as an event source "
 aws lambda create-event-source-mapping --profile "${PROFILE}" --region "${REGION}" \
