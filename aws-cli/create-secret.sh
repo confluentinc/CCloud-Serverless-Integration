@@ -12,8 +12,6 @@
 # that you create by running ./gradlew propsToJson with your
 # CCloud credentials saved to src/main/resources/confluent.properties (GitHub ignores confluent.properties)
 
-# clean out results file from any previous runs
-true > aws-results.json
 
 echo "Create the AWS secrets config to hold connection information"
 aws secretsmanager create-secret --profile "${PROFILE}" --region "${REGION}" \

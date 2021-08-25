@@ -1,7 +1,3 @@
--- noinspection SqlDialectInspectionForFile
-
--- noinspection SqlNoDataSourceInspectionForFile
-
 CREATE STREAM STOCKTRADE (
       side varchar,
       quantity int,
