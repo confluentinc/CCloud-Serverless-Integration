@@ -8,9 +8,6 @@
 # You only need to run this script once.  After that
 # you can refer to the role by name
 
-# clean out results file from any previous runs
-true > aws-results.json
-
 echo "Create the role needed for the lambda"
 aws iam create-role --profile "${PROFILE}" \
   --region "${REGION}" --role-name "${ROLE_NAME}" \

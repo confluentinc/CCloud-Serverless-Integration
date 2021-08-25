@@ -9,10 +9,10 @@
 # or CCloud. Feel free to update the names of the other
 # variables as desired. 
 export PROFILE="<AWS PROFILE>"
-export REGION="<REGION TO USE>"
+export REGION="us-west-2"
 export BOOTSTRAP_SERVERS="<BOOTSTRAP SERVERS CONFIG>"
 
-export ROLE_NAME="ccloud-lambda"
-export POLICY_NAME="ccloud-lambda-policy"
+export ROLE_NAME="CCloud-lambda-role"
+export POLICY_NAME="CCloud-lambda-policy"
 export CREDS_NAME="CCloudLambdaCreds"
-export FUNCTION_NAME="CCloudLambdaIntegration"
+export FUNCTION_NAME="CCloudLambdaIntegrationFunction"

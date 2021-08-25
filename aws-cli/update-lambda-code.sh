@@ -13,7 +13,7 @@ true > aws-results.json
 echo "Update the Lambda code"
 aws lambda update-function-code --profile "${PROFILE}" --region "${REGION}" \
     --function-name "${FUNCTION_NAME}" \
-    --zip-file fileb://../build/distributions/confluent-lambda-serverless-1.0-SNAPSHOT.zip | tee -a aws-results.json
+    --zip-file fileb://../build/distributions/confluent-lambda-serverless-1.0-SNAPSHOT.zip | tee aws-results.json
 
 
 
