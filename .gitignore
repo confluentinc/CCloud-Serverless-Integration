@@ -49,6 +49,7 @@ src/main/resources/user-datagen.json
 src/main/resources/ksql-start-command.txt
 scratch.txt
 aws-cli/configs.sh
-aws-cli/*results.json
+aws-cli/*results.out
 aws-cli/aws-ccloud-creds.json
+java-service-account-*.config
 
