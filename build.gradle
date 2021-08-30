@@ -111,8 +111,6 @@ class PropertiesToJsonTask extends DefaultTask {
         String saslConfig = properties.get("sasl.jaas.config")
         // We're doing this because the AWS security manager wants a separate username and password entry for configuring the event source
         def matcher = saslConfig =~ /.*username='([^']*)'.*password='([^']*)'.*/
-        def ksqlStartCmnd = ""
-        def ksqlFormatted = '''ccloud ksql app create ksqlDBLambdaIntegration --api-key %s --api-secret %s'''
         if (matcher.find()) {
             String username = matcher.group(1)
             String password = matcher.group(2)
@@ -120,7 +118,6 @@ class PropertiesToJsonTask extends DefaultTask {
             properties.put("password", password)
             baseDatagenConfigs.put("kafka.api.key", username)
             baseDatagenConfigs.put("kafka.api.secret", password)
-            ksqlStartCmnd =  String.format(ksqlFormatted, username, password)
         } else {
             throw new RuntimeException("AWS security manager requires 'username' and 'password' entries ")
         }
@@ -141,7 +138,6 @@ class PropertiesToJsonTask extends DefaultTask {
         objectMapper.writerWithDefaultPrettyPrinter().writeValue(destinationJsonFile, properties)
         objectMapper.writerWithDefaultPrettyPrinter().writeValue(stocktradeDatagenJsonFile, stocktradeConfigs)
         objectMapper.writerWithDefaultPrettyPrinter().writeValue(userDatagenJsonFile, userConfigs)
-        Files.writeString(Paths.get("src/main/resources/ksql-start-command.txt"), ksqlStartCmnd)
     }
 }
 
