@@ -137,7 +137,7 @@ public class CCloudStockRecordHandler implements RequestHandler<Map<String, Obje
     }
 
     private Map<String, String> getSecretsConfigs() {
-        String secretName = "CCloudLambdaCreds";
+        String secretName = "CCloudLambdaCredentials";
         Region region = Region.of("us-west-2");
         SecretsManagerClient client = SecretsManagerClient.builder()
                 .region(region)

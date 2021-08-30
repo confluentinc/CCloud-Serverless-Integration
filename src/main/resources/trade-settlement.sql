@@ -1,5 +1,3 @@
--- noinspection SqlDialectInspectionForFile
--- noinspection SqlNoDataSourceInspectionForFile
 
 CREATE STREAM TRADE_SETTLEMENT (
       user varchar,
