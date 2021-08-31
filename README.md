@@ -105,7 +105,9 @@ file.
      Connector src/main/resources/user-datagen.json (UsersDatagen) is RUNNING
     ```  
 6. The final step the script performs is to upload [the sql statements](src/main/resources/stocktrade-statements.sql) for ksqlDB to execute and the following appears on the console
-  
+   <details>
+   <summary>Click to view sql statements upload results</summary>
+   
    ```shell
     Submit KSQL queries for running the AWS Lambda demo from src/main/resources/stocktrade-statements.sql
     CREATE STREAM STOCKTRADE (side varchar,quantity int,symbol varchar,price int,account varchar,userid varchar) with (kafka_topic = 'stocktrade',value_format = 'json');
@@ -116,7 +118,8 @@ file.
 
     CREATE STREAM USER_TRADES WITH (kafka_topic = 'user_trades' ) AS SELECT s.userid as USERID,u.regionid,quantity,symbol,price,account,side FROM STOCKTRADE s LEFT JOIN STOCK_USERS u on s.USERID = u.userid;
     [{"@type":"currentStatus","statementText":"CREATE STREAM USER_TRADES WITH (KAFKA_TOPIC='user_trades', PARTITIONS=6, REPLICAS=3) AS SELECT\n  S.USERID USERID,\n  U.REGIONID REGIONID,\n  S.QUANTITY QUANTITY,\n  S.SYMBOL SYMBOL,\n  S.PRICE PRICE,\n  S.ACCOUNT ACCOUNT,\n  S.SIDE SIDE\nFROM STOCKTRADE S\nLEFT OUTER JOIN STOCK_USERS U ON ((S.USERID = U.USERID))\nEMIT CHANGES;","commandId":"stream/`USER_TRADES`/create","commandStatus":{"status":"SUCCESS","message":"Created query with ID CSAS_USER_TRADES_5","queryId":"CSAS_USER_TRADES_5"},"commandSequenceNumber":6,"warnings":[]}]
-   ```
+   ``` 
+   </details>
  
 At this point, you'll have a running Kafka cluster, datagen connectors, and a ksqlDB application performing a join on the two generated event streams.  You can log into the Confluent Cloud Console
 and click on `ksqlDB` on the left.  Then click on `Streams` -> `Query USER_TRADES` to observe the results.
@@ -153,6 +156,9 @@ The script will prompt you to enter `y` or `n` to confirm your choice.
    3. Finally, an AWS Lambda instance with an event sources mapped to the Confluent Cloud topic `user_trades` which contains the results of the ksqlDB join
 
 The script output will resemble this:
+<details>
+<summary> Click to view script output</summary>
+
 ```json
   Create the AWS secrets config to hold connection information
 {
@@ -234,7 +240,8 @@ Adding a CCloud topic as an event source
     }
 }
 ```
-   
+</details> 
+
 5. To confirm the lambda is working
    1. Log into the AWS console and select the `Lambda` service
    2. Then `Functions` on the left-hand side menu
@@ -254,6 +261,9 @@ Then run the [ccloud-run-lambda-sql](ccloud-run-lamba-sql.sh) script from the ro
 ```
 
 The results of loading these sql statements will look like (details truncated for clarity)
+<details>
+<summary>Click to view sql statement upload results</summary>
+
 ```shell
  CREATE STREAM TRADE_SETTLEMENT (user varchar, symbol varchar, amount double, disposition varchar, reason varchar, timestamp BIGINT) with (kafka_topic = 'trade-settlements', value_format = 'PROTOBUF', timestamp = 'timestamp');
  [{"@type":"currentStatus","statementText":"CREATE STREAM TRADE_SETTLEMENT....
@@ -270,7 +280,9 @@ The results of loading these sql statements will look like (details truncated fo
  CREATE TABLE REJECTED_PER_MINUTE AS SELECT symbol, count(*) AS num_rejected FROM TRADE_SETTLEMENT WINDOW TUMBLING (size 60 second) WHERE disposition like '%Rejected%' GROUP BY symbol;
  [{"@type":"currentStatus","statementText":"CREATE TABLE REJECTED_PER_MINUTE...
  ```
-    
+</details>
+
+
 ### Clean Up
 
 Since both the Confluent Cloud and AWS resources cost money, it's important to fully remove all compents in both cloud environments.
