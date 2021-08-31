@@ -1049,11 +1049,11 @@ function ccloud::destroy_ccloud_stack() {
     local REDIRECT_TO="/dev/stdout"
 
   echo "Destroying Confluent Cloud stack associated to service account id $SERVICE_ACCOUNT_ID"
-
   # Delete associated ACLs
+  ccloud::delete_acls_ccloud_stack $SERVICE_ACCOUNT_ID
+  
   ksqldb_id_found=$(ccloud ksql app list -o json | jq -r 'map(select(.name == "'"$KSQLDB_NAME"'")) | .[].id')
   if [[ $ksqldb_id_found != "" ]]; then
-    ccloud::delete_acls_ccloud_stack $SERVICE_ACCOUNT_ID
     echo "Deleting KSQLDB: $KSQLDB_NAME : $ksqldb_id_found"
     ccloud ksql app delete $ksqldb_id_found &> "$REDIRECT_TO"
   fi
