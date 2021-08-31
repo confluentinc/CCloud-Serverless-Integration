@@ -129,7 +129,10 @@ Then you'll run a script which will set up all the AWS resources and create a La
 
 1. In the `aws-cli` directory save the file [configs.orig.sh](aws-cli/configs.orig.sh) as `configs.sh`.  The project will ignore the `configs.sh` file.  It's used to provide environment 
 replacements needed for some AWS commands. Most of the variables are already set, but you'll need to update the `PROFILE` variable with the profile name to use, `default` if you are not sure.
-Then update the `BOOTSTRAP_SERVERS` variable with the value contained in the `stack-configs/java-service-account-*.config` file you created in the previous step.
+Then update the `BOOTSTRAP_SERVERS` variable with the value contained in the `stack-configs/java-service-account-*.config` file you created in the previous step.  **IMPORTANT! The name for the credentials `CREDS_NAME="CCloudLambdaCredentials"` is hard coded in the Java Lambda code.  I realize this isn't ideal, and I'm working towards making this dynamic, but
+in the meantime, DON'T CHANGE THIS VALUE**
+ 
+
 
 2. From the root of the repository run 
 ```shell
