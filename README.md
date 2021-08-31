@@ -31,13 +31,14 @@ To create the Kafka cluster, ksqlDB application, and the datagen sink connectors
  ./ccloud-build-app.sh
 ```
            
-The [ccloud-build-app script](ccloud-build-app.sh) script performs several tasks which I'll highlight here. If you want to skip the details, once the script complete the next step you'll take is to create the [AWS Lambda and required resources](#create-the-aws-lambda)
+The [ccloud-build-app script](ccloud-build-app.sh) script performs several tasks which I'll highlight here. If you want to skip the details, once the script complete the next step you'll need to take is specified in the [AWS Lambda and required resources](#create-the-aws-lambda) section.
+*_PLEASE NOTE: the script performs these steps, the details are here for you to follow along with what's happening while it runs_*
 
 1. It creates a Kafka cluster (with the required ACLs) and a ksqlDB application on Confluent Cloud.  The script waits for the brokers and the ksqlDB application to be in a runnable state before moving on.
 Note that the amount of time for the ksqlDB application to get in a runnable state takes a few minutes, but the script will provide the status.
    1. When the cluster is running you'll see some output like this
      ```shell
-        ....
+            ....
             +------------------+------------+------------------+----------+---------------+---------+
             User:312125      | ALLOW      | IDEMPOTENT_WRITE | CLUSTER  | kafka-cluster | LITERAL
             ServiceAccountId | Permission | Operation | Resource |     Name      |  Type
@@ -49,6 +50,31 @@ Note that the amount of time for the ksqlDB application to get in a runnable sta
 
       ```
       The `NNNN` on the `java-service-account` configuration file contains the credentials created during the cluster and ksqlDB creation process.  You won't have to work with it directly, but the remaining stages of the `ccloud-build-app` script will use it in subsequent steps, that will cover soon.
+2. Next, the script will wait for the ksqlDB application to come online, you'll see something like this
+   ```shell
+      Now waiting up to 720 seconds for the ksqlDB cluster to be UP
+   ```
+    Once ksqlDB is operational you'll see this line in the console
+    ```shell
+     Successfully created ksqlDB
+    ```  
+3. Then the script creates the required topics.  This part goes quickly, and you'll see something similar to this in the console:
+    ```shell
+      Now creating topics
+      Created topic "stocktrade".
+      Created topic "stock_users".
+      Created topic "user_trades".
+      Created topic "trade-settlements".
+    ```  
+4. The next step the script performs is to create JSON files needed to create datagen connectors on Confluent Cloud and a JSON file for setting up connection credentials so the AWS Lambda 
+can use the `user_trades` topic as an event source and produce back to Kafka.  
+To create the files, the script executes a [custom task, propsToJson](https://github.com/confluentinc/CCloud-Serverless-Integration/blob/final-automation-changes-readme-updates/build.gradle#L95-L145)
+file. 
+ The specific files created (ignored by the repository) are
+   1. `src/main/resources/stocktrade-dategen.json`
+   2. `src/main/resources/user-datagen.json`
+   3. `aws-cli/aws-ccloud-creds.json`
+
 Now that we have the cloud stack resources in place from project root run `./gradlew propsToJson` this will create the following:
 
 * JSON properties file, `aws-cli/aws-ccloud-creds.json` (git ignores this file) for creating an AWS secret containing credentials for connecting to Confluent Cloud

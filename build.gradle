@@ -98,6 +98,7 @@ class PropertiesToJsonTask extends DefaultTask {
         Map<String, String> baseDatagenConfigs = ["connector.class":"DatagenSource", "output.data.format":"JSON", "tasks.max":"1"]
         ObjectMapper objectMapper = new ObjectMapper();
         Properties properties = new Properties();
+        // We do this to always grab the latest java-service-configs file from the stack-configs directory if previous ones aren't deleted
         File stackConfigs = Files.list(Paths.get("stack-configs"))
                 .sorted((path1, path2) -> path2.toFile().lastModified() <=> path1.toFile().lastModified())
                 .findFirst().get().toFile()
