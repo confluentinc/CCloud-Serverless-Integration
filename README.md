@@ -138,7 +138,9 @@ Then update the `BOOTSTRAP_SERVERS` variable with the value contained in the `st
 3. CD into the `aws-cli` directory 
    1. Run the [aws-create-all](aws-cli/aws-create-all.sh) script
   ```shell
+  cd aws-cli
   ./aws-create-all.sh 
+  cd ../
    ````
 The script will prompt you to enter `y` or `n` to confirm your choice.  
 
