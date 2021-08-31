@@ -1,7 +1,7 @@
 # Confluent Cloud Lambda Serverless Integration
 
 ### Prerequisites
-* Java 11
+* Java 11 (*_NOTE_* this is the latest version of Java supported by the AWS Lambda)
 * Gradle 7.0
 * jq
 * A user account in [Confluent Cloud](https://www.confluent.io/confluent-cloud/tryfree/)
@@ -12,54 +12,43 @@
 
 ### Setup
 
+To run this demo, you'll need a Kafka cluster, a ksqlDB application and two datagen source connectors.  The source connectors will generate two event streams that the ksqlDB will join and write
+out to a topic, `user_trades`.  Then an AWS Lambda, using the `user_trades` as an event source will take some additional action and produce results back to the Kafka cluster in Confluent Cloud.
+Using a lambda in this way is a proxy for a User Defined Function (UDF) with ksqlDB in Confluent Cloud.
+
+But before you run the demo, you'll need to set up some resources on Confluent Cloud and AWS.  We've provided some scripts in this repository to keep the amount of work you need to do
+at a minimum, but you need to the setup portion first.
+
 The following sections provide details for setting up a cluster on Confluent Cloud and creating an AWS Lambda to process events from ksqlDB
 
-#### Provision a new ccloud-stack on Confluent Cloud
+#### Provisioning a Kafka Cluster, ksqlDB application, and datagen source connectors
 
-This part assumes you have already set-up an account on [Confluent CLoud](https://confluent.cloud/) and you've installed the [Confluent Cloud CLI](https://docs.confluent.io/ccloud-cli/current/install.html). We're going to use the `ccloud-stack` utility to get everything set-up to work along with the workshop.
+*_NOTE_*: This part assumes you have already set up an account on [Confluent CLoud](https://confluent.cloud/) and you've installed the [Confluent Cloud CLI](https://docs.confluent.io/ccloud-cli/current/install.html).
 
-A copy of the [ccloud_library.sh](https://github.com/confluentinc/examples/blob/latest/utils/ccloud_library.sh) is included in this repo and let's run this command now:
+To create the Kafka cluster, ksqlDB application, and the datagen sink connectors you'll run this command from the base directory of this repository
 
+```shell
+ ./ccloud-build-app.sh
 ```
-source ./ccloud_library.sh
-```
+           
+The [ccloud-build-app script](ccloud-build-app.sh) script performs several tasks which I'll highlight here. If you want to skip the details, once the script complete the next step you'll take is to create the [AWS Lambda and required resources](#create-the-aws-lambda)
 
-Then let's create the stack of Confluent Cloud resources, note that we're passing in `true` so that a ksqlDB application is created as well:
+1. It creates a Kafka cluster (with the required ACLs) and a ksqlDB application on Confluent Cloud.  The script waits for the brokers and the ksqlDB application to be in a runnable state before moving on.
+Note that the amount of time for the ksqlDB application to get in a runnable state takes a few minutes, but the script will provide the status.
+   1. When the cluster is running you'll see some output like this
+     ```shell
+        ....
+            +------------------+------------+------------------+----------+---------------+---------+
+            User:312125      | ALLOW      | IDEMPOTENT_WRITE | CLUSTER  | kafka-cluster | LITERAL
+            ServiceAccountId | Permission | Operation | Resource |     Name      |  Type
+            +------------------+------------+-----------+----------+---------------+---------+
+            User:312125      | ALLOW      | DESCRIBE  | CLUSTER  | kafka-cluster | LITERAL
+            Set API Key "JOMV3TUYDUP4JKWX" as the active API key for "lkc-jd17p".
 
-```
-CLUSTER_CLOUD=aws
-CLUSTER_REGION=us-west-2
-ccloud::create_ccloud_stack true
-```
+            Client configuration file saved to: stack-configs/java-service-account-NNNNNN.config
 
-NOTE: Make sure you destroy all resources when the workshop concludes.
-
-The `create` command generates a local config file, `java-service-account-NNNNN.config` when it completes. The `NNNNN` represents the service account id.  Take a quick look at the file:
-
-```
-cat stack-configs/java-service-account-*.config
-```
-
-You should see something like this:
-
-```
-# ENVIRONMENT ID: <ENVIRONMENT ID>
-# SERVICE ACCOUNT ID: <SERVICE ACCOUNT ID>
-# KAFKA CLUSTER ID: <KAFKA CLUSTER ID>
-# SCHEMA REGISTRY CLUSTER ID: <SCHEMA REGISTRY CLUSTER ID>
-# ------------------------------
-ssl.endpoint.identification.algorithm=https
-security.protocol=SASL_SSL
-sasl.mechanism=PLAIN
-bootstrap.servers=<BROKER ENDPOINT>
-sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="<API KEY>" password="<API SECRET>";
-basic.auth.credentials.source=USER_INFO
-schema.registry.basic.auth.user.info=<SR API KEY>:<SR API SECRET>
-schema.registry.url=https://<SR ENDPOINT>
-```
-
-We'll use these properties for connecting to CCloud from your AWS Lambda, but we'll get to that in just a minute.
-
+      ```
+      The `NNNN` on the `java-service-account` configuration file contains the credentials created during the cluster and ksqlDB creation process.  You won't have to work with it directly, but the remaining stages of the `ccloud-build-app` script will use it in subsequent steps, that will cover soon.
 Now that we have the cloud stack resources in place from project root run `./gradlew propsToJson` this will create the following:
 
 * JSON properties file, `aws-cli/aws-ccloud-creds.json` (git ignores this file) for creating an AWS secret containing credentials for connecting to Confluent Cloud
