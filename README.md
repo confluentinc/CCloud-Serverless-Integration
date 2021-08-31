@@ -127,7 +127,7 @@ and click on `ksqlDB` on the left.  Then click on `Streams` -> `Query USER_TRADE
 To create the AWS Lambda it is assumed that you've already set up [local configuration for the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html). 
 Then you'll run a script which will set up all the AWS resources and create a Lambda instance for you.
 
-1. In the `aws-cli` directory save the file `configs.orig.sh` as `configs.sh`.  The project will ignore the `configs.sh` file.  It's used to provide environment 
+1. In the `aws-cli` directory save the file [configs.orig.sh](aws-cli/configs.orig.sh) as `configs.sh`.  The project will ignore the `configs.sh` file.  It's used to provide environment 
 replacements needed for some AWS commands. Most of the variables are already set, but you'll need to update the `PROFILE` variable with the profile name to use, `default` if you are not sure.
 Then update the `BOOTSTRAP_SERVERS` variable with the value contained in the `stack-configs/java-service-account-*.config` file you created in the previous step.
 
