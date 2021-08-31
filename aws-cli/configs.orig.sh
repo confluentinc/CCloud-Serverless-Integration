@@ -14,5 +14,5 @@ export BOOTSTRAP_SERVERS="<BOOTSTRAP SERVERS CONFIG>"
 
 export ROLE_NAME="CCloud-lambda-role"
 export POLICY_NAME="CCloud-lambda-policy"
-export CREDS_NAME="CCloudLambdaCreds"
+export CREDS_NAME="CCloudLambdaCredentials"
 export FUNCTION_NAME="CCloudLambdaIntegrationFunction"
