@@ -52,4 +52,6 @@ aws-cli/configs.sh
 aws-cli/*results.out
 aws-cli/aws-ccloud-creds.json
 java-service-account-*.config
+ccloud_library.sh
+
 
