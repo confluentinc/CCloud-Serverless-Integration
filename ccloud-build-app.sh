@@ -4,6 +4,7 @@ source ./ccloud_library.sh
 
 export CLUSTER_CLOUD=aws
 export CLUSTER_REGION=us-west-2
+export EXAMPLE=ConfluentCloudLambdaIntegration
 BUILD_KSQLDB_APP=true
 
 ccloud::create_ccloud_stack $BUILD_KSQLDB_APP
