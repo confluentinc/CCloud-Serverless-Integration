@@ -73,7 +73,7 @@ Note that the amount of time for the ksqlDB application to get in a runnable sta
     ```  
 4. The next step the script performs is to create JSON files needed to create datagen connectors on Confluent Cloud and a JSON file for setting up connection credentials so the AWS Lambda 
 can use the `user_trades` topic as an event source and produce back to Kafka.  
-To create the files, the script executes a [custom task, propsToJson](https://github.com/confluentinc/CCloud-Serverless-Integration/blob/final-automation-changes-readme-updates/build.gradle#L95-L145)
+To create the files, the script executes a [custom task, propsToJson](https://github.com/confluentinc/CCloud-Serverless-Integration/blob/main/build.gradle#L95-L145)
 file. 
  The specific files created (ignored by the repository) are
    1. `src/main/resources/stocktrade-dategen.json`
@@ -130,7 +130,11 @@ and click on `ksqlDB` on the left.  Then click on `Streams` -> `Query USER_TRADE
 To create the AWS Lambda it is assumed that you've already set up [local configuration for the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html). 
 Then you'll run a script which will set up all the AWS resources and create a Lambda instance for you.
 
-1. In the `aws-cli` directory save the file [configs.orig.sh](aws-cli/configs.orig.sh) as `configs.sh`.  The project will ignore the `configs.sh` file.  It's used to provide environment 
+1. In the `aws-cli` directory save the file [configs.orig.sh](aws-cli/configs.orig.sh) as `configs.sh`
+```shell
+ cat aws-cli/configs.orig.sh > cofigs.sh
+```
+The project will ignore the `configs.sh` file.  It's used to provide environment 
 replacements needed for some AWS commands. Most of the variables are already set, but you'll need to update the `PROFILE` variable with the profile name to use, `default` if you are not sure.
 Then update the `BOOTSTRAP_SERVERS` variable with the value contained in the `stack-configs/java-service-account-*.config` file you created in the previous step.  **IMPORTANT! The name for the credentials `CREDS_NAME="CCloudLambdaCredentials"` is hard coded in the Java Lambda code.  I realize this isn't ideal, and I'm working towards making this dynamic, but
 in the meantime, DON'T CHANGE THIS VALUE**
@@ -141,12 +145,9 @@ in the meantime, DON'T CHANGE THIS VALUE**
 ```shell
  ./gradlew clean build buildZip 
 ````
-3. CD into the `aws-cli` directory 
-   1. Run the [aws-create-all](aws-cli/aws-create-all.sh) script
+3. Run the [aws-create-all](aws-cli/aws-create-all.sh) script in the `aws-cli` directory. Note that the script needs to be run from the `aws-cli` directory
   ```shell
-  cd aws-cli
-  ./aws-create-all.sh 
-  cd ../
+  (cd aws-cli && ./aws-create-all.sh) 
    ````
 The script will prompt you to enter `y` or `n` to confirm your choice.  
 
@@ -289,11 +290,9 @@ Since both the Confluent Cloud and AWS resources cost money, it's important to f
 
 #### Remove up all AWS resources
 To remove all the AWS components you'll run the [aws-delete-all.sh](aws-cli/aws-delete-all.sh) script.
-1. Run these commands to clean up the AWS components
+1. Run this commands to clean up the AWS components
     ```shell 
-     cd aws-cli
-     ./aws-delete-all.sh
-     cd ../
+     (cd aws-cli && ./aws-delete-all.sh) 
     ```  
 #### Remove up all Confluent Cloud resources
 To remove the Confluent Cloud components do the following:
