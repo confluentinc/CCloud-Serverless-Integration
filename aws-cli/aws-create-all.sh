@@ -13,6 +13,13 @@ if [[ $SET_PROFILE == "" ]]; then
   exit 1
 fi
 
+ACCOUNT_NUM=$(aws sts get-caller-identity --profile "$PROFILE" | jq -r ".Account")
+
+if [[ $ACCOUNT_NUM == "" ]]; then
+  echo "No account number associated with the profile ${PROFILE} you'll need to set up an account"
+  exit 1
+fi
+
 # clean out results file from any previous runs
 echo "Cleaning out aws command response file aws-results.out"
 true > aws-results.out
@@ -71,13 +78,13 @@ read -p "This will install the AWS resources need for this demo.  Enter y if you
         --timeout 600 \
         --zip-file fileb://../build/distributions/confluent-lambda-serverless-1.0-SNAPSHOT.zip \
         --handler io.confluent.developer.CCloudStockRecordHandler::handleRequest \
-        --runtime java11  --role arn:aws:iam::343223495109:role/"${ROLE_NAME}" | tee -a aws-results.out
+        --runtime java11  --role arn:aws:iam::"${ACCOUNT_NUM}":role/"${ROLE_NAME}" | tee -a aws-results.out
 
       echo "Adding a CCloud topic as an event source "
       aws lambda create-event-source-mapping --profile "${PROFILE}" --region "${REGION}" \
           --topics user_trades \
-          --source-access-configuration Type=BASIC_AUTH,URI=arn:aws:secretsmanager:us-west-2:343223495109:secret:"${CREDS_NAME}" \
-          --function-name arn:aws:lambda:us-west-2:343223495109:function:"${FUNCTION_NAME}" \
+          --source-access-configuration Type=BASIC_AUTH,URI=arn:aws:secretsmanager:us-west-2:"${ACCOUNT_NUM}":secret:"${CREDS_NAME}" \
+          --function-name arn:aws:lambda:us-west-2:"${ACCOUNT_NUM}":function:"${FUNCTION_NAME}" \
           --self-managed-event-source '{"Endpoints":{"KAFKA_BOOTSTRAP_SERVERS":["'${BOOTSTRAP_SERVERS}'"]}}'  | tee -a aws-results.out
 
       else
