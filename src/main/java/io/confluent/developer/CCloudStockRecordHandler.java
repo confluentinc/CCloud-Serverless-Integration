@@ -44,6 +44,7 @@ public class CCloudStockRecordHandler implements RequestHandler<Map<String, Obje
         configs.put("security.protocol", "SASL_SSL");
         configs.put("sasl.mechanism", "PLAIN");
         configs.put("basic.auth.credentials.source", "USER_INFO");
+        configs.put(ProducerConfig.CLIENT_ID_CONFIG, "LambdaProducer");
         configs.put(ProducerConfig.ACKS_CONFIG, "all");
         configs.put(ProducerConfig.CLIENT_DNS_LOOKUP_CONFIG, "use_all_dns_ips");
         configs.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);

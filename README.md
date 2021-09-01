@@ -257,7 +257,7 @@ Next you'll run a series of queries in the [lambda-processing-statements.sql](sr
 analysis of the results from the Lambda. 
 
 To do this first CD back into the base directory of the repository.  
-Then run the [ccloud-run-lambda-sql](ccloud-run-lamba-sql.sh) script from the root of the project
+Then run the [ccloud-run-lambda-sql](ccloud-run-lambda-sql.sh) script from the root of the project
 
 ```shell
  ./ccloud-run-lambda-sql.sh
