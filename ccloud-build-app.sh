@@ -1,5 +1,11 @@
 #!/bin/bash
 
+if test ! -f ccloud_library.sh; then
+   echo "The ccloud_library script not found.
+   Getting it now via wqet command"
+   wget -O ccloud_library.sh https://raw.githubusercontent.com/confluentinc/examples/latest/utils/ccloud_library.sh
+fi
+
 source ./ccloud_library.sh
 
 export CLUSTER_CLOUD=aws

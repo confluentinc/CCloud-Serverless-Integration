@@ -2,6 +2,19 @@
 
 . ./configs.sh
 
+if test ! -f ~/.aws/credentials; then
+   echo "AWS credentials are required please set up credentials for your account"
+   exit 1
+fi
+
+SET_PROFILE=$(grep "$PROFILE" < ~/.aws/credentials)
+if [[ $SET_PROFILE == "" ]]; then
+  echo "Profile ${PROFILE} not found in the AWS configurations, check and fix in the configs.sh file"
+  exit 1
+fi
+
+
+
 # clean out results file from any previous runs
 echo "Cleaning out aws command response file aws-results.out"
 true > aws-results.out
