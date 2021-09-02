@@ -57,7 +57,6 @@ public class CCloudStockRecordHandler implements RequestHandler<Map<String, Obje
     @Override
     @SuppressWarnings("unchecked")
     public Void handleRequest(Map<String, Object> payload, Context context) {
-        List<Future<RecordMetadata>> tradeSettlementFutures = new ArrayList<>();
         LambdaLogger logger = context.getLogger();
         logger.log("Configs are " + configs);
         Map<String, List<Map<String, Object>>> records = (Map<String, List<Map<String, Object>>>) payload.get("records");
@@ -104,22 +103,17 @@ public class CCloudStockRecordHandler implements RequestHandler<Map<String, Obje
 
             logger.log("Trade Settlement result " + tradeSettlement);
             ProducerRecord<String, TradeSettlement> settlementRecord = new ProducerRecord<>("trade-settlements", tradeSettlement.getSymbol(), tradeSettlement);
-            tradeSettlementFutures.add(producer.send(settlementRecord));
-        })
-        );
-        
-        tradeSettlementFutures.forEach((recordMetadataFuture -> {
-            try {
-                RecordMetadata metadata = recordMetadataFuture.get(5, TimeUnit.SECONDS);
-                if (metadata != null) {
+            producer.send(settlementRecord , (metadata, exception) -> {
+                if (exception != null) {
+                    logger.log("Caught exception trying to produce " + exception.getMessage());
+                } else {
                     String message = String.format("Sent record to CCloud Kafka topic=%s, offset=%d, timestamp=%s", metadata.topic(), metadata.offset(), metadata.timestamp());
                     logger.log(message);
                 }
-            } catch (Exception e) {
-                logger.log("Caught exception trying to produce " + e.getMessage());
-            }
+            });
         }));
-
+        logger.log("Done processing, flushing all records now");
+        producer.flush();
 
         return null;
     }

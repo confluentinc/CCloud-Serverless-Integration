@@ -71,7 +71,7 @@ read -p "This will install the AWS resources need for this demo.  Enter y if you
 
       echo "Waiting for 10 seconds for the role and policy to sync"
       sleep 10
-      echo "Create the lambda"
+      echo "Creating the lambda, this may take several seconds depending your network connection"
       aws lambda  create-function --profile "${PROFILE}" --region "${REGION}" \
         --function-name "${FUNCTION_NAME}" \
         --memory-size 512 \
