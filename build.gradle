@@ -95,7 +95,7 @@ protobuf {
 class PropertiesToJsonTask extends DefaultTask {
     @TaskAction
     def propsToJson() {
-        Map<String, String> baseDatagenConfigs = ["connector.class":"DatagenSource", "output.data.format":"JSON", "tasks.max":"1", "max.interval": "750"]
+        Map<String, String> baseDatagenConfigs = ["connector.class":"DatagenSource", "output.data.format":"JSON", "tasks.max":"1"]
         ObjectMapper objectMapper = new ObjectMapper();
         Properties properties = new Properties();
         // We do this to always grab the latest java-service-configs file from the stack-configs directory if previous ones aren't deleted
