@@ -246,11 +246,12 @@ Adding a CCloud topic as an event source
 </details> 
 
 5. To confirm the lambda is working
-   1. Log into the AWS console and select the `Lambda` service
-   2. Then `Functions` on the left-hand side menu
-   3. Select the `CCloudLambdaIntegrationFunction`
-   4. Then select `Monitor` tab.  If there aren't any logs present, wait a few minutes then select a log file and inspect the contents
-   5. Go to the Confluent Cloud Console and click on the `Data Lineage` link you should see something like this
+   1. Run this command to view the events for the Lambda
+   ```shell
+    (cd aws-cli && ./read-latest-log-events.sh | less)
+    ```
+      If there isn't any output wait a few minutes and run it again.  Note this command only shows events from the latest log file.
+   2. Go to the Confluent Cloud Console and click on the `Data Lineage` link you should see something like this
     ![Dataflow to Lambda image](images/pushing-data-from-ccloud.png)
    
 ### Run the ksqlDB queries to process Lambda results
