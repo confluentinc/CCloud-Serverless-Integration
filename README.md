@@ -250,6 +250,8 @@ Adding a CCloud topic as an event source
    2. Then `Functions` on the left-hand side menu
    3. Select the `CCloudLambdaIntegrationFunction`
    4. Then select `Monitor` tab.  If there aren't any logs present, wait a few minutes then select a log file and inspect the contents
+   5. Go to the Confluent Cloud Console and click on the `Data Lineage` link you should see something like this
+    ![Dataflow to Lambda image](images/pushing-data-from-ccloud.png)
    
 ### Run the ksqlDB queries to process Lambda results
 
@@ -262,6 +264,8 @@ Then run the [ccloud-run-lambda-sql](ccloud-run-lambda-sql.sh) script from the r
 ```shell
  ./ccloud-run-lambda-sql.sh
 ```
+Then navigate back to the `Data Lineage` section and from the selections at the bottom you should be able to another one that's shows the flow from the lambda to Confluent Cloud
+![Dataflow from lambda to Confluent Cloud](images/pushing-data-from-lambda-to-ccloud-data-flow.png)
 
 The results of loading these sql statements will look like (details truncated for clarity)
 <details>
