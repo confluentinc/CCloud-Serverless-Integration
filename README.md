@@ -21,10 +21,6 @@ at a minimum, but you need to the setup portion first.
 
 The following sections provide details for setting up a cluster on Confluent Cloud and creating an AWS Lambda to process events from ksqlDB
 
-### TLDR;
-
-TODO fill out this section with just the commands needed to get up and running 
-
 ### Provisioning a Kafka Cluster, ksqlDB application, and datagen source connectors
 
 **_NOTE:_** This part assumes you have already set up an account on [Confluent CLoud](https://confluent.cloud/) and you've installed the [Confluent Cloud CLI](https://docs.confluent.io/ccloud-cli/current/install.html).
