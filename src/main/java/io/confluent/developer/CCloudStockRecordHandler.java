@@ -59,16 +59,16 @@ public class CCloudStockRecordHandler implements RequestHandler<Map<String, Obje
     public Void handleRequest(Map<String, Object> payload, Context context) {
         LambdaLogger logger = context.getLogger();
         logger.log("Configs are " + configs);
-        Map<String, List<Map<String, Object>>> records = (Map<String, List<Map<String, Object>>>) payload.get("records");
+        Map<String, List<Map<String, String>>> records = (Map<String, List<Map<String, String>>>) payload.get("records");
 
         records.forEach((key, recordList) -> recordList.forEach(recordMap -> {
             byte[] keyBytes;
             String tradeKey = null;
             if (recordMap.containsKey("key")) {
-                keyBytes = decode((String)recordMap.get("key"));
+                keyBytes = decode(recordMap.get("key"));
                 tradeKey = stringDeserializer.deserialize("", keyBytes);
             }
-            byte[] bytes = decode((String)recordMap.get("value"));
+            byte[] bytes = decode(recordMap.get("value"));
             Map<String, Object> trade = getMapFromString(stringDeserializer.deserialize("", bytes));
             logger.log("Key is " + tradeKey + " Record is " + trade);
             Instant now = Instant.now();
