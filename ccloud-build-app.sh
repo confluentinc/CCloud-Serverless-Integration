@@ -108,7 +108,7 @@ echo " src/main/resources/stocktrade-datagen.json "
 echo " src/main/resources/user-datagen.json"
 echo "The JSON file for AWS securitymanager is aws-cli/aws-ccloud-creds.json"
 
-./gradlew  propsToJson
+gradle propsToJson
 
 sleep 1
 echo "Now creating the stocktrade datagen connector"
