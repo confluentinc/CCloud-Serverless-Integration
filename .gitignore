@@ -54,5 +54,6 @@ java-service-account-*.config
 ccloud_library.sh
 confluent.properties
 *.out
+!gradle/wrapper/gradle-wrapper.jar
 
 
