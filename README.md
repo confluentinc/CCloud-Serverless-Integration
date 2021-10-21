@@ -247,7 +247,7 @@ Adding a CCloud topic as an event source
     (cd aws-cli && ./read-latest-log-events.sh | less)
     ```
       If there isn't any output wait a few minutes and run it again.  Note this command only shows events from the latest log file.
-   2. Go to the Confluent Cloud Console and click on the `Data Lineage` link you should see something like this
+   2. Go to the Confluent Cloud Console and click on the `Stream Lineage` link you should see something like this
     ![Dataflow to Lambda image](images/pushing-data-from-ccloud.png)
    
 ### Run the ksqlDB queries to process Lambda results
@@ -261,7 +261,7 @@ Then run the [ccloud-run-lambda-sql](ccloud-run-lambda-sql.sh) script from the r
 ```shell
  ./ccloud-run-lambda-sql.sh
 ```
-Then navigate back to the `Data Lineage` section and from the selections at the bottom you should be able to another one that's shows the flow from the lambda to Confluent Cloud
+Then navigate back to the `Stream Lineage` section and from the selections at the bottom you should be able to another one that's shows the flow from the lambda to Confluent Cloud
 ![Dataflow from lambda to Confluent Cloud](images/pushing-data-from-lambda-to-ccloud-data-flow.png)
 
 The results of loading these sql statements will look like (details truncated for clarity)
