@@ -147,6 +147,18 @@ in the meantime, DON'T CHANGE THIS VALUE**
   ```shell
   (cd aws-cli && ./aws-create-all.sh) 
    ````
+
+> ✎ **NOTE:**  
+> If the username on the account doesn't have sufficient permissions to perform any of the commands in the AWS script you'll get an error similar to this:
+> 
+> An error occurred (AccessDeniedException) when calling the XXXX operation: User: arn:aws:iam::829250931565:user/abcd 
+> is not authorized to perform: xxxxxx:XXXXXX on resource: XXXXXX because no identity-based policy allows the xxxxxx:XXXXXX action
+> 
+> 
+> To fix this issue you'll have to provide the user the sufficient permissions (maybe admin access) via IAM through the cli or UI
+
+
+
 The script will prompt you to enter `y` or `n` to confirm your choice.  
 
 4. The following AWS components get created:
