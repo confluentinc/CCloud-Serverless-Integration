@@ -65,7 +65,7 @@ Note that the amount of time for the ksqlDB application to get in a runnable sta
     ```shell
       Now creating topics
       Created topic "stocktrade".
-      Created topic "stock_users".
+      Created topic "users".
       Created topic "user_trades".
       Created topic "trade-settlements".
     ```  
@@ -111,11 +111,11 @@ file.
     CREATE STREAM STOCKTRADE (side varchar,quantity int,symbol varchar,price int,account varchar,userid varchar) with (kafka_topic = 'stocktrade',value_format = 'json');
     [{"@type":"currentStatus","statementText":"CREATE STREAM STOCKTRADE (SIDE STRING, QUANTITY INTEGER, SYMBOL STRING, PRICE INTEGER, ACCOUNT STRING, USERID STRING) WITH (KAFKA_TOPIC='stocktrade', KEY_FORMAT='KAFKA', VALUE_FORMAT='JSON');","commandId":"stream/`STOCKTRADE`/create","commandStatus":{"status":"SUCCESS","message":"Stream created","queryId":null},"commandSequenceNumber":2,"warnings":[]}]
 
-    CREATE TABLE STOCK_USERS (userid varchar primary key, registertime BIGINT, regionid varchar ) with ( kafka_topic = 'stock_users', value_format = 'json');
-    [{"@type":"currentStatus","statementText":"CREATE TABLE STOCK_USERS (USERID STRING PRIMARY KEY, REGISTERTIME BIGINT, REGIONID STRING) WITH (KAFKA_TOPIC='stock_users', KEY_FORMAT='KAFKA', VALUE_FORMAT='JSON');","commandId":"table/`STOCK_USERS`/create","commandStatus":{"status":"SUCCESS","message":"Table created","queryId":null},"commandSequenceNumber":4,"warnings":[]}]
+    CREATE TABLE users (userid varchar primary key, registertime BIGINT, regionid varchar ) with ( kafka_topic = 'users', value_format = 'json');
+    [{"@type":"currentStatus","statementText":"CREATE TABLE users (USERID STRING PRIMARY KEY, REGISTERTIME BIGINT, REGIONID STRING) WITH (KAFKA_TOPIC='users', KEY_FORMAT='KAFKA', VALUE_FORMAT='JSON');","commandId":"table/`users`/create","commandStatus":{"status":"SUCCESS","message":"Table created","queryId":null},"commandSequenceNumber":4,"warnings":[]}]
 
-    CREATE STREAM USER_TRADES WITH (kafka_topic = 'user_trades' ) AS SELECT s.userid as USERID,u.regionid,quantity,symbol,price,account,side FROM STOCKTRADE s LEFT JOIN STOCK_USERS u on s.USERID = u.userid;
-    [{"@type":"currentStatus","statementText":"CREATE STREAM USER_TRADES WITH (KAFKA_TOPIC='user_trades', PARTITIONS=6, REPLICAS=3) AS SELECT\n  S.USERID USERID,\n  U.REGIONID REGIONID,\n  S.QUANTITY QUANTITY,\n  S.SYMBOL SYMBOL,\n  S.PRICE PRICE,\n  S.ACCOUNT ACCOUNT,\n  S.SIDE SIDE\nFROM STOCKTRADE S\nLEFT OUTER JOIN STOCK_USERS U ON ((S.USERID = U.USERID))\nEMIT CHANGES;","commandId":"stream/`USER_TRADES`/create","commandStatus":{"status":"SUCCESS","message":"Created query with ID CSAS_USER_TRADES_5","queryId":"CSAS_USER_TRADES_5"},"commandSequenceNumber":6,"warnings":[]}]
+    CREATE STREAM USER_TRADES WITH (kafka_topic = 'user_trades' ) AS SELECT s.userid as USERID,u.regionid,quantity,symbol,price,account,side FROM STOCKTRADE s LEFT JOIN users u on s.USERID = u.userid;
+    [{"@type":"currentStatus","statementText":"CREATE STREAM USER_TRADES WITH (KAFKA_TOPIC='user_trades', PARTITIONS=6, REPLICAS=3) AS SELECT\n  S.USERID USERID,\n  U.REGIONID REGIONID,\n  S.QUANTITY QUANTITY,\n  S.SYMBOL SYMBOL,\n  S.PRICE PRICE,\n  S.ACCOUNT ACCOUNT,\n  S.SIDE SIDE\nFROM STOCKTRADE S\nLEFT OUTER JOIN users U ON ((S.USERID = U.USERID))\nEMIT CHANGES;","commandId":"stream/`USER_TRADES`/create","commandStatus":{"status":"SUCCESS","message":"Created query with ID CSAS_USER_TRADES_5","queryId":"CSAS_USER_TRADES_5"},"commandSequenceNumber":6,"warnings":[]}]
    ``` 
    </details>
  

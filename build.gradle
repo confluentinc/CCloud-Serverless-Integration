@@ -129,7 +129,7 @@ class PropertiesToJsonTask extends DefaultTask {
         stocktradeConfigs.put("name","StockTradeDatagen")
         Map<String, String> userConfigs = new HashMap<>(baseDatagenConfigs)
         userConfigs.put("quickstart", "USERS")
-        userConfigs.put("kafka.topic", "stock_users")
+        userConfigs.put("kafka.topic", "users")
         userConfigs.put("name", "UsersDatagen")
 
         File destinationJsonFile = new File("aws-cli/aws-ccloud-creds.json")
