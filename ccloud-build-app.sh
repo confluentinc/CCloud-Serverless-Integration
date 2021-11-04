@@ -87,17 +87,17 @@ ccloud::retry $MAX_WAIT ccloud::validate_ccloud_ksqldb_endpoint_ready "$KSQLDB_E
 echo "Successfully created ksqlDB"
 echo "Now creating topics"
 
-for topic in stocktrade stock_users user_trades trade-settlements; do
+for topic in stocktrade users user_trades trade-settlements; do
     ccloud kafka topic create $topic;
   done
 
 
 echo "Now setting ACLs to all the ksqlDB app to use topics"
 ksqlDBAppId=$(ccloud ksql app list | grep "$KSQLDB_ENDPOINT" | awk '{print $1}')
-ccloud ksql app configure-acls "$ksqlDBAppId" stocktrade stock_users user_trades trade-settlements
+ccloud ksql app configure-acls "$ksqlDBAppId" stocktrade users user_trades trade-settlements
 KSQLDB_SERVICE_ACCOUNT_ID=$(ccloud kafka cluster list -o json | jq -r '.[0].name' | awk -F'-' '{print $4;}')
 ccloud kafka acl create --allow --service-account "${KSQLDB_SERVICE_ACCOUNT_ID}" --operation READ --topic stocktrade
-ccloud kafka acl create --allow --service-account "${KSQLDB_SERVICE_ACCOUNT_ID}" --operation READ --topic stock_users
+ccloud kafka acl create --allow --service-account "${KSQLDB_SERVICE_ACCOUNT_ID}" --operation READ --topic users
 ccloud kafka acl create --allow --service-account "${KSQLDB_SERVICE_ACCOUNT_ID}" --operation WRITE --topic user_trades
 ccloud kafka acl create --allow --service-account "${KSQLDB_SERVICE_ACCOUNT_ID}" --operation READ --topic trade-settlements
 
