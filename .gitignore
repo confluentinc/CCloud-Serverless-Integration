@@ -57,3 +57,4 @@ confluent.properties
 !gradle/wrapper/gradle-wrapper.jar
 
 
+credentials
