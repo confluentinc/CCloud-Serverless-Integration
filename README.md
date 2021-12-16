@@ -23,7 +23,7 @@ The following sections provide details for setting up a cluster on Confluent Clo
 
 ### Provisioning a Kafka Cluster, ksqlDB application, and datagen source connectors
 
-**_NOTE:_** This part assumes you have already set up an account on [Confluent CLoud](https://confluent.cloud/) and you've installed the [Confluent Cloud CLI](https://docs.confluent.io/ccloud-cli/current/install.html).
+**_NOTE:_** This part assumes you have already set up an account on [Confluent Cloud](https://confluent.cloud/) and you've installed the [Confluent CLI](https://docs.confluent.io/confluent-cli/current/install.html).
 
 To create the Kafka cluster, ksqlDB application, and the datagen sink connectors you'll run this command from the base directory of this repository
 
@@ -49,10 +49,10 @@ Note that the amount of time for the ksqlDB application to get in a runnable sta
             User:312125      | ALLOW      | DESCRIBE  | CLUSTER  | kafka-cluster | LITERAL
             Set API Key "JOMV3TUYDUP4JKWX" as the active API key for "lkc-jd17p".
 
-            Client configuration file saved to: stack-configs/java-service-account-NNNNNN.config
+            Client configuration file saved to: stack-configs/java-service-account-sa-xxxxxx.config
 
       ```
-      The `NNNN` on the `java-service-account` configuration file contains the credentials created during the cluster and ksqlDB creation process.  You won't have to work with it directly, but the remaining stages of the `ccloud-build-app` script will use it in subsequent steps, that will cover soon.
+      The `java-service-account-sa-xxxxxx` configuration file contains the credentials created during the cluster and ksqlDB creation process.  You won't have to work with it directly, but the remaining stages of the `ccloud-build-app` script will use it in subsequent steps, that we'll cover soon.
 2. Next, the script will wait for the ksqlDB application to come online, you'll see something like this
    ```shell
       Now waiting up to 720 seconds for the ksqlDB cluster to be UP
