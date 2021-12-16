@@ -312,11 +312,11 @@ To remove all the AWS components you'll run the [aws-delete-all.sh](aws-cli/aws-
 #### Remove up all Confluent Cloud resources
 To remove the Confluent Cloud components do the following:
 1. **_Open a new terminal window_** and go to the root directory of the repository
-2. Copy the numbers from the `stack-configs/java-service-account-NNNNNN.config` file. 
-   Then the following commands with the service account number from the file:
+2. Copy `sa-xxxxxx` from the `stack-configs/java-service-account-sa-xxxxxx.config` file name. 
+   Then run the following commands with the service account number from the file:
 ```shell
  source ./ccloud_library.sh
- ccloud::destroy_ccloud_stack NNNNNNNN
+ ccloud::destroy_ccloud_stack sa-xxxxxx
 ```
      
     

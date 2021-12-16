@@ -1,6 +1,6 @@
 #!/bin/bash
 
-MISSING_CCLOUD_MESSAGE="ccloud is not found. Install Confluent Cloud CLI (https://docs.confluent.io/ccloud-cli/current/install.html) and try again"
+MISSING_CCLOUD_MESSAGE="confluent is not found. Install Confluent CLI (https://docs.confluent.io/confluent-cli/current/install.html) and try again"
 MISSING_GRADLE_MESSAGE="Gradle is not found.  Go to https://gradle.org/install/ for instructions to install and try again"
 MISSING_JQ_MESSAGE="jq is not found.  Go to https://stedolan.github.io/jq/download/ to install and try again"
 MISSING_AWS_CLI_MESSAGE="AWS CLI not found Go to https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html to install and try again"
@@ -20,19 +20,19 @@ function compareVersions() {
 function validateVersions() {
   BAD_VERSIONS=""
 
-  CCLOUD_VERSION=$(ccloud --version | cut -d v -f 3 )
+  CONFLUENT_VERSION=$(confluent --version | cut -d v -f 3 )
   GRADLE_VERSION=$(gradle --version | grep Gradle | cut -d ' ' -f 2)
   JQ_VERSION=$(jq --version | cut -d '-' -f 2)
   AWS_VERSION=$( aws --version | cut -d '/' -f 2 | cut -d ' ' -f 1)
 
-  MIN_CCLOUD=1.36.0
+  MIN_CONFLUENT=2.3.1
   MIN_GRADLE=7.0
   MIN_JQ=1.6
   MIN_AWS=2.2.30
 
-  if [[ $(compareVersions $CCLOUD_VERSION $MIN_CCLOUD) -eq 0 ]]; then
+  if [[ $(compareVersions $CONFLUENT_VERSION $MIN_CONFLUENT) -eq 0 ]]; then
      BAD_VERSIONS="TRUE"
-     echo "CCloud min version is ${MIN_CCLOUD} but version ${CCLOUD_VERSION} installed currently"
+     echo "Confluent min version is ${MIN_CONFLUENT} but version ${CONFLUENT_VERSION} installed currently"
   fi
   
  if [[ $(compareVersions $GRADLE_VERSION $MIN_GRADLE) -eq 0 ]]; then
@@ -57,7 +57,7 @@ function validateVersions() {
 }
 
 
-validateInstall ccloud "$MISSING_CCLOUD_MESSAGE"
+validateInstall confluent "$MISSING_CONFLUENT_MESSAGE"
 validateInstall gradle "$MISSING_GRADLE_MESSAGE"
 validateInstall jq "$MISSING_JQ_MESSAGE"
 validateInstall aws "$MISSING_AWS_CLI_MESSAGE"
@@ -88,18 +88,18 @@ echo "Successfully created ksqlDB"
 echo "Now creating topics"
 
 for topic in stocktrade users user_trades trade-settlements; do
-    ccloud kafka topic create $topic;
+    confluent kafka topic create $topic;
   done
 
 
 echo "Now setting ACLs to all the ksqlDB app to use topics"
-ksqlDBAppId=$(ccloud ksql app list | grep "$KSQLDB_ENDPOINT" | awk '{print $1}')
-ccloud ksql app configure-acls "$ksqlDBAppId" stocktrade users user_trades trade-settlements
-KSQLDB_SERVICE_ACCOUNT_ID=$(ccloud kafka cluster list -o json | jq -r '.[0].name' | awk -F'-' '{print $4;}')
-ccloud kafka acl create --allow --service-account "${KSQLDB_SERVICE_ACCOUNT_ID}" --operation READ --topic stocktrade
-ccloud kafka acl create --allow --service-account "${KSQLDB_SERVICE_ACCOUNT_ID}" --operation READ --topic users
-ccloud kafka acl create --allow --service-account "${KSQLDB_SERVICE_ACCOUNT_ID}" --operation WRITE --topic user_trades
-ccloud kafka acl create --allow --service-account "${KSQLDB_SERVICE_ACCOUNT_ID}" --operation READ --topic trade-settlements
+ksqlDBAppId=$(confluent ksql app list | grep "$KSQLDB_ENDPOINT" | awk '{print $1}')
+confluent ksql app configure-acls "$ksqlDBAppId" stocktrade users user_trades trade-settlements
+KSQLDB_SERVICE_ACCOUNT_ID=$(confluent kafka cluster list -o json | jq -r '.[0].name' | awk -F'-' '{print $4"-"$5;}')
+confluent kafka acl create --allow --service-account "${KSQLDB_SERVICE_ACCOUNT_ID}" --operation READ --topic stocktrade
+confluent kafka acl create --allow --service-account "${KSQLDB_SERVICE_ACCOUNT_ID}" --operation READ --topic users
+confluent kafka acl create --allow --service-account "${KSQLDB_SERVICE_ACCOUNT_ID}" --operation WRITE --topic user_trades
+confluent kafka acl create --allow --service-account "${KSQLDB_SERVICE_ACCOUNT_ID}" --operation READ --topic trade-settlements
 
 echo "Now generating JSON properties needed for creating datagen connectors and AWS secrets manager"
 echo "For this the script is using custom gradle task 'propsToJson' "
@@ -112,9 +112,9 @@ echo "The JSON file for AWS securitymanager is aws-cli/aws-ccloud-creds.json"
 
 sleep 1
 echo "Now creating the stocktrade datagen connector"
-ccloud connector create --config src/main/resources/stocktrade-datagen.json
+confluent connect create --config src/main/resources/stocktrade-datagen.json
 echo "Now creating the user datagen connector"
-ccloud connector create --config src/main/resources/user-datagen.json
+confluent connect create --config src/main/resources/user-datagen.json
 
 echo "Waiting for the stocktrade datagen connector to be up and running will wait up to 600 seconds"
 ccloud::wait_for_connector_up  src/main/resources/stocktrade-datagen.json 600
