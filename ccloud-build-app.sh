@@ -1,6 +1,6 @@
 #!/bin/bash
 
-MISSING_CCLOUD_MESSAGE="confluent is not found. Install Confluent CLI (https://docs.confluent.io/ccloud-cli/current/install.html) and try again"
+MISSING_CCLOUD_MESSAGE="confluent is not found. Install Confluent CLI (https://docs.confluent.io/confluent-cli/current/install.html) and try again"
 MISSING_GRADLE_MESSAGE="Gradle is not found.  Go to https://gradle.org/install/ for instructions to install and try again"
 MISSING_JQ_MESSAGE="jq is not found.  Go to https://stedolan.github.io/jq/download/ to install and try again"
 MISSING_AWS_CLI_MESSAGE="AWS CLI not found Go to https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html to install and try again"
@@ -32,7 +32,7 @@ function validateVersions() {
 
   if [[ $(compareVersions $CONFLUENT_VERSION $MIN_CONFLUENT) -eq 0 ]]; then
      BAD_VERSIONS="TRUE"
-     echo "CCloud min version is ${MIN_CONFLUENT} but version ${CONFLUENT_VERSION} installed currently"
+     echo "Confluent min version is ${MIN_CONFLUENT} but version ${CONFLUENT_VERSION} installed currently"
   fi
   
  if [[ $(compareVersions $GRADLE_VERSION $MIN_GRADLE) -eq 0 ]]; then
