@@ -17,27 +17,26 @@ namespace Confluent.Functions
     static class AzureSinkTrigger
     {
 
-        static IProducer<string,string> producer; 
-        static IConfiguration confluentConfigs;
+        static IProducer<string, string> producer;
         static string outputTopic = "azure-output";
         static Dictionary<string, string> producerConfigs = new Dictionary<string, string>()
         {
-            
+
             {"security.protocol", "SASL_SSL"},
             {"sasl.mechanisms", "PLAIN"},
-           
+
         };
 
-        
-       static AzureSinkTrigger () 
+
+        static AzureSinkTrigger()
         {
-            producerConfigs.TryAdd("bootstrap.servers", Environment.GetEnvironmentVariable("bootstrap-servers"));
-            producerConfigs.TryAdd("sasl.username", Environment.GetEnvironmentVariable("sasl-username"));
-            producerConfigs.TryAdd("sasl.password", Environment.GetEnvironmentVariable("sasl-password"));
-            
-           if (producer is null) {
-            producer = new ProducerBuilder<string, string>(producerConfigs).Build();
-           }
+            if (producer is null)
+            {
+                producerConfigs.Add("bootstrap.servers", Environment.GetEnvironmentVariable("bootstrap-servers"));
+                producerConfigs.Add("sasl.username", Environment.GetEnvironmentVariable("sasl-username"));
+                producerConfigs.Add("sasl.password", Environment.GetEnvironmentVariable("sasl-password"));
+                producer = new ProducerBuilder<string, string>(producerConfigs).Build();
+            }
         }
 
         [FunctionName("AzureSinkConnectorTrigger")]
@@ -46,24 +45,26 @@ namespace Confluent.Functions
             ILogger log)
         {
             log.LogInformation("C# HTTP trigger function for Azure Sink Connector processed a request.");
-            log.LogInformation($"config settings {producerConfigs}");
+            log.LogInformation($"config settings {producerConfigs.ToString}");
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             dynamic records = JsonConvert.DeserializeObject(requestBody);
             int NumberRecords = 0;
-            
+
             log.LogInformation($"full request body {requestBody}");
-        
+
             foreach (dynamic record in records)
             {
-                string recordString = "Parsed record  - key [" + record.key + "] value[" + record.value +"]";
+                string recordString = "Parsed record  - key [" + record.key + "] value[" + record.value + "]";
                 dynamic value = record.value;
-                producer.Produce(outputTopic, new Message<string, string>{ Key = record.key, Value = $"processed order for {record.key}"},
-                (deliveryReport) => 
+                producer.Produce(outputTopic, new Message<string, string> { Key = record.key, Value = $"processed order for {record.key}" },
+                (deliveryReport) =>
                 {
-                    if (deliveryReport.Error.Code != ErrorCode.NoError) {
+                    if (deliveryReport.Error.Code != ErrorCode.NoError)
+                    {
                         log.LogError($"Problem producing record: {deliveryReport.Error.Reason}");
                     }
-                    else {
+                    else
+                    {
                         log.LogInformation($"Produced record to {deliveryReport.Topic} at offset {deliveryReport.Offset} with timestamp {deliveryReport.Timestamp.UtcDateTime}");
 
                     }
