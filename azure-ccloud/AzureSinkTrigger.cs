@@ -6,16 +6,20 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+
 using Newtonsoft.Json;
 using Confluent.Kafka;
 
 namespace Confluent.Functions
 {
-    public static class AzureSinkTrigger
+    static class AzureSinkTrigger
     {
 
         static IProducer<string,string> producer; 
+        static IConfiguration confluentConfigs;
         static string outputTopic = "azure-output";
         static Dictionary<string, string> producerConfigs = new Dictionary<string, string>()
         {
@@ -25,8 +29,16 @@ namespace Confluent.Functions
            
         };
 
-        static AzureSinkTrigger () {
+        
+       static AzureSinkTrigger () 
+        {
+            producerConfigs.TryAdd("bootstrap.servers", Environment.GetEnvironmentVariable("bootstrap-servers"));
+            producerConfigs.TryAdd("sasl.username", Environment.GetEnvironmentVariable("sasl-username"));
+            producerConfigs.TryAdd("sasl.password", Environment.GetEnvironmentVariable("sasl-password"));
+            
+           if (producer is null) {
             producer = new ProducerBuilder<string, string>(producerConfigs).Build();
+           }
         }
 
         [FunctionName("AzureSinkConnectorTrigger")]
@@ -35,13 +47,12 @@ namespace Confluent.Functions
             ILogger log)
         {
             log.LogInformation("C# HTTP trigger function for Azure Sink Connector processed a request.");
-
+            log.LogInformation($"config settings {producerConfigs}");
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             dynamic records = JsonConvert.DeserializeObject(requestBody);
             int NumberRecords = 0;
             
             log.LogInformation($"full request body {requestBody}");
-            log.LogInformation($"Producer id {producer.ToString}");
         
             foreach (dynamic record in records)
             {
