@@ -4,6 +4,7 @@
 # Azure Functions localsettings file
 local.settings.json
 azure-account-details.txt
+azure-ccloud-creds.json
 
 # User-specific files
 *.suo

@@ -19,22 +19,15 @@ namespace Confluent.Functions
 
         static IProducer<string, string> producer;
         static string outputTopic = "azure-output";
-        static Dictionary<string, string> producerConfigs = new Dictionary<string, string>()
-        {
-
-            {"security.protocol", "SASL_SSL"},
-            {"sasl.mechanisms", "PLAIN"},
-
-        };
+        static string rawConfigJson;
 
 
         static AzureSinkTrigger()
         {
             if (producer is null)
             {
-                producerConfigs.Add("bootstrap.servers", Environment.GetEnvironmentVariable("bootstrap-servers"));
-                producerConfigs.Add("sasl.username", Environment.GetEnvironmentVariable("sasl-username"));
-                producerConfigs.Add("sasl.password", Environment.GetEnvironmentVariable("sasl-password"));
+                rawConfigJson = Environment.GetEnvironmentVariable("ccloud-producer-configs");
+                Dictionary<string, string> producerConfigs =  JsonConvert.DeserializeObject<Dictionary<string, string>>(rawConfigJson);
                 producer = new ProducerBuilder<string, string>(producerConfigs).Build();
             }
         }
@@ -45,7 +38,6 @@ namespace Confluent.Functions
             ILogger log)
         {
             log.LogInformation("C# HTTP trigger function for Azure Sink Connector processed a request.");
-            log.LogInformation($"config settings {producerConfigs.ToString}");
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             dynamic records = JsonConvert.DeserializeObject(requestBody);
             int NumberRecords = 0;
