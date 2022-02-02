@@ -5,6 +5,7 @@
 local.settings.json
 azure-account-details.txt
 azure-ccloud-creds.json
+schema-registry-creds.json
 
 # User-specific files
 *.suo

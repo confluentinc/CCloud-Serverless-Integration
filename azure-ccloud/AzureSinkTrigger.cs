@@ -6,29 +6,43 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 using Newtonsoft.Json;
 using Confluent.Kafka;
+using Confluent.SchemaRegistry;
+using Confluent.SchemaRegistry.Serdes;
+using Io.Confluent.Developer.Proto;
+
 
 namespace Confluent.Functions
 {
     static class AzureSinkTrigger
     {
 
-        static IProducer<string, string> producer;
-        static string outputTopic = "azure-output";
-        static string rawConfigJson;
-
+        static IProducer<string, TradeSettlement> producer;
+        static string outputTopic = "trade-settlements";
 
         static AzureSinkTrigger()
         {
             if (producer is null)
             {
-                rawConfigJson = Environment.GetEnvironmentVariable("ccloud-producer-configs");
-                Dictionary<string, string> producerConfigs =  JsonConvert.DeserializeObject<Dictionary<string, string>>(rawConfigJson);
-                producer = new ProducerBuilder<string, string>(producerConfigs).Build();
+                var rawConfigJson = Environment.GetEnvironmentVariable("ccloud-producer-configs");
+                var rawSchemaRegistryConfigs = Environment.GetEnvironmentVariable("schema-registry-configs");
+
+                Dictionary<string, string> producerConfigs = JsonConvert.DeserializeObject<Dictionary<string, string>>(rawConfigJson);
+                Dictionary<string, string> schemaConfigs = JsonConvert.DeserializeObject<Dictionary<string, string>>(rawSchemaRegistryConfigs);
+
+                var schemaRegistryConfig = new SchemaRegistryConfig();
+                foreach (KeyValuePair<string, string> configEntry in schemaConfigs)
+                {
+                    schemaRegistryConfig.Set(configEntry.Key, configEntry.Value);
+                }
+
+                var schemaRegistry = new CachedSchemaRegistryClient(schemaRegistryConfig);
+                producer = new ProducerBuilder<string, TradeSettlement>(producerConfigs)
+                .SetValueSerializer(new ProtobufSerializer<TradeSettlement>(schemaRegistry))
+                .Build();
             }
         }
 
@@ -43,12 +57,55 @@ namespace Confluent.Functions
             int NumberRecords = 0;
 
             log.LogInformation($"full request body {requestBody}");
-
+            Random random = new Random();
             foreach (dynamic record in records)
             {
                 string recordString = "Parsed record  - key [" + record.key + "] value[" + record.value + "]";
-                dynamic value = record.value;
-                producer.Produce(outputTopic, new Message<string, string> { Key = record.key, Value = $"processed order for {record.key}" },
+                DateTime now = DateTime.UtcNow;
+                int secInspection = random.Next(100);
+                Dictionary<string, object> trade = JsonConvert.DeserializeObject<Dictionary<string, object>>(record.value);
+
+                int shares = (int)trade["QUANTITY"];
+                int price = (int)trade["PRICE"];
+                var amount = (double)shares * price;
+                var user = record.key;
+                var symbol = (String)trade["SYMBOL"];
+                long timestamp = now.Ticks;
+                string disposition;
+                string reason;
+
+                if (user.equals("NO USER"))
+                {
+                    disposition = "Rejected";
+                    reason = "No user account specified";
+                }
+                else if (amount > 100000)
+                {
+                    disposition = "Pending";
+                    reason = "Large trade";
+                }
+                else if (secInspection < 30)
+                {
+                    disposition = "SEC Flagged";
+                    reason = "This trade looks sus";
+                }
+                else
+                {
+                    disposition = "Completed";
+                    reason = "Within same day limit";
+                }
+
+                TradeSettlement tradeSettlement = new TradeSettlement
+                {
+                    User = user,
+                    Symbol = symbol,
+                    Disposition = disposition,
+                    Reason = reason,
+                    Timestamp = timestamp
+                };
+
+                log.LogInformation("Trade Settlement result " + tradeSettlement);
+                producer.Produce(outputTopic, new Message<string, TradeSettlement> { Key = symbol, Value = tradeSettlement },
                 (deliveryReport) =>
                 {
                     if (deliveryReport.Error.Code != ErrorCode.NoError)
