@@ -75,11 +75,19 @@ fi
 
 source ./ccloud_library.sh
 
-export CLUSTER_CLOUD=aws
-export CLUSTER_REGION=us-west-2
+if [ -z "$CLUSTER_CLOUD" ]; then
+   CLUSTER_CLOUD=aws
+fi
+
+if [ -z "$CLUSTER_REGION" ]; then
+   CLUSTER_REGION=us-west-2
+fi
+
+echo "Using Cluster type ${CLUSTER_CLOUD} in region ${CLUSTER_REGION}"
+export CLUSTER_CLOUD
+export CLUSTER_REGION
 export EXAMPLE=ConfluentCloudLambdaIntegration
 BUILD_KSQLDB_APP=true
-
 ccloud::create_ccloud_stack $BUILD_KSQLDB_APP
 MAX_WAIT=720
 echo "Now waiting up to $MAX_WAIT seconds for the ksqlDB cluster to be UP"

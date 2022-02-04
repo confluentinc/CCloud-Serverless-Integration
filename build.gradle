@@ -107,9 +107,10 @@ class PropertiesToJsonTask extends DefaultTask {
             properties.load(fis);
         }
         // Taking these out because they aren't sensitive values plus we want the same entries between different deployments
-        ["security.protocol", "sasl.mechanism", "client.dns.lookup",
-         "acks", "basic.auth.credentials.source", "replication.factor"].forEach(k -> properties.remove(k))
+        ["client.dns.lookup", "acks", "basic.auth.credentials.source", "replication.factor"].forEach(k -> properties.remove(k))
         String saslConfig = properties.get("sasl.jaas.config")
+        Map<String, String> azureCredentials = ["security.protocol":"SASL_SSL", "sasl.mechanisms":"PLAIN"]
+        azureCredentials.put("bootstrap.servers", (String)properties.get("bootstrap.servers"))
         // We're doing this because the AWS security manager wants a separate username and password entry for configuring the event source
         def matcher = saslConfig =~ /.*username='([^']*)'.*password='([^']*)'.*/
         if (matcher.find()) {
@@ -117,6 +118,8 @@ class PropertiesToJsonTask extends DefaultTask {
             String password = matcher.group(2)
             properties.put("username", username)
             properties.put("password", password)
+            azureCredentials.put("sasl.username", username)
+            azureCredentials.put("sasl.password", password)
             baseDatagenConfigs.put("kafka.api.key", username)
             baseDatagenConfigs.put("kafka.api.secret", password)
         } else {
@@ -135,10 +138,12 @@ class PropertiesToJsonTask extends DefaultTask {
         File destinationJsonFile = new File("aws-cli/aws-ccloud-creds.json")
         File stocktradeDatagenJsonFile = new File("src/main/resources/stocktrade-datagen.json")
         File userDatagenJsonFile = new File("src/main/resources/user-datagen.json")
+        File azureCredsJsonFile = new File("azure-ccloud/azure-ccloud-creds.json")
         
         objectMapper.writerWithDefaultPrettyPrinter().writeValue(destinationJsonFile, properties)
         objectMapper.writerWithDefaultPrettyPrinter().writeValue(stocktradeDatagenJsonFile, stocktradeConfigs)
         objectMapper.writerWithDefaultPrettyPrinter().writeValue(userDatagenJsonFile, userConfigs)
+        objectMapper.writerWithDefaultPrettyPrinter().writeValue(azureCredsJsonFile, azureCredentials)
     }
 }
 
