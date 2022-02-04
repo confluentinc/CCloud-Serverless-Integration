@@ -27,11 +27,11 @@ namespace Confluent.Functions
             var rawConfigJson = Environment.GetEnvironmentVariable("ccloud-producer-configs");
             var rawSchemaRegistryConfigs = Environment.GetEnvironmentVariable("schema-registry-configs");
 
-                Dictionary<string, string> producerConfigs = JsonConvert.DeserializeObject<Dictionary<string, string>>(rawConfigJson);
-                Dictionary<string, string> schemaConfigs = JsonConvert.DeserializeObject<Dictionary<string, string>>(rawSchemaRegistryConfigs);
+                var producerConfigs = JsonConvert.DeserializeObject<Dictionary<string, string>>(rawConfigJson);
+                var schemaConfigs = JsonConvert.DeserializeObject<Dictionary<string, string>>(rawSchemaRegistryConfigs);
 
                 var schemaRegistryConfig = new SchemaRegistryConfig();
-                foreach (KeyValuePair<string, string> configEntry in schemaConfigs)
+                foreach (var configEntry in schemaConfigs)
                 {
                     schemaRegistryConfig.Set(configEntry.Key, configEntry.Value);
                 }
@@ -47,17 +47,17 @@ namespace Confluent.Functions
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
             ILogger log)
         {
-            log.LogInformation("C# HTTP trigger function for Azure Sink Connector processed a request.");
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+            log.LogInformation("C# HTTP trigger function for Azure Sink triggered");
+            var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             dynamic records = JsonConvert.DeserializeObject(requestBody);
-            int NumberRecords = 0;
+            var numberRecords = 0;
             log.LogInformation($"full request body {requestBody}");
-            Random random = new Random();
-            foreach (dynamic record in records)
+            var random = new Random();
+            foreach (var record in records)
             {
                 log.LogInformation($"key [{record.key}] value [{record.value}] ");
-                DateTime now = DateTime.UtcNow;
-                int secInspection = random.Next(100);
+                var now = DateTime.UtcNow;
+                var secInspection = random.Next(100);
                 Dictionary<string, object> trade = JsonConvert.DeserializeObject<Dictionary<string, object>>(record.value.ToString());
 
                 var shares = (Int64) trade["QUANTITY"];
@@ -90,7 +90,7 @@ namespace Confluent.Functions
                     reason = "Within same day limit";
                 }
 
-                TradeSettlement tradeSettlement = new TradeSettlement
+                var tradeSettlement = new TradeSettlement
                 {
                     User = user,
                     Symbol = symbol,
@@ -114,12 +114,12 @@ namespace Confluent.Functions
                                 $"Produced record to {deliveryReport.Topic} at offset {deliveryReport.Offset} with timestamp {deliveryReport.Timestamp.UtcDateTime}");
                         }
                     });
-                NumberRecords++;
+                numberRecords++;
             }
 
             producer.Flush();
-            string responseMessage =
-                $"This Azure Sink Connector triggered function executed successfully and it processed {NumberRecords} records";
+            var responseMessage =
+                $"This Azure Sink Connector triggered function executed successfully and it processed {numberRecords} records";
             return new OkObjectResult(responseMessage);
         }
     }
