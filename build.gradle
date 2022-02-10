@@ -110,7 +110,10 @@ class PropertiesToJsonTask extends DefaultTask {
         ["client.dns.lookup", "acks", "basic.auth.credentials.source", "replication.factor"].forEach(k -> properties.remove(k))
         String saslConfig = properties.get("sasl.jaas.config")
         Map<String, String> azureCredentials = ["security.protocol":"SASL_SSL", "sasl.mechanisms":"PLAIN"]
+        Map<String, String> azureSchemaRegistryCredentials = ["schema.registry.basic.auth.credentials.source": "USER_INFO"]
         azureCredentials.put("bootstrap.servers", (String)properties.get("bootstrap.servers"))
+        azureSchemaRegistryCredentials.put("schema.registry.basic.auth.user.info", (String)properties.get("basic.auth.user.info"))
+        azureSchemaRegistryCredentials.put("schema.registry.url", (String)properties.get("schema.registry.url"))
         // We're doing this because the AWS security manager wants a separate username and password entry for configuring the event source
         def matcher = saslConfig =~ /.*username='([^']*)'.*password='([^']*)'.*/
         if (matcher.find()) {
@@ -139,11 +142,13 @@ class PropertiesToJsonTask extends DefaultTask {
         File stocktradeDatagenJsonFile = new File("src/main/resources/stocktrade-datagen.json")
         File userDatagenJsonFile = new File("src/main/resources/user-datagen.json")
         File azureCredsJsonFile = new File("azure-ccloud/azure-ccloud-creds.json")
+        File azureSRCredsJsonFile = new File("azure-ccloud/azure-schema-registry-creds.json")
         
         objectMapper.writerWithDefaultPrettyPrinter().writeValue(destinationJsonFile, properties)
         objectMapper.writerWithDefaultPrettyPrinter().writeValue(stocktradeDatagenJsonFile, stocktradeConfigs)
         objectMapper.writerWithDefaultPrettyPrinter().writeValue(userDatagenJsonFile, userConfigs)
         objectMapper.writerWithDefaultPrettyPrinter().writeValue(azureCredsJsonFile, azureCredentials)
+        objectMapper.writerWithDefaultPrettyPrinter().writeValue(azureSRCredsJsonFile, azureSchemaRegistryCredentials)
     }
 }
 
