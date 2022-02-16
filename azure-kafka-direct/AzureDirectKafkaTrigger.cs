@@ -49,12 +49,18 @@ public static class AzureDirectKafkaTrigger
             Username = "%sasl-username%",
             Password = "%sasl-password%")]
         KafkaEventData<string, string>[] kafkaEvents,
+        [Kafka("%ccloud-bootstrap-servers%",
+            OutputTopic,
+            Protocol = BrokerProtocol.SaslSsl,
+            AuthenticationMode = BrokerAuthenticationMode.Plain,
+            Username = "%ccloud-username%",
+            Password = "%ccloud-secret%")]
+        IAsyncCollector<KafkaEventData<string, TradeSettlement>> outputRecords,
         ILogger logger)
     {
         var numberRecords = 0;
         foreach (var kafkaEvent in kafkaEvents)
         {
-            
             var key = kafkaEvent.Key;
             var random = new Random();
             var now = DateTime.UtcNow;
@@ -101,23 +107,15 @@ public static class AzureDirectKafkaTrigger
             };
 
             logger.LogInformation($"Trade Settlement result {tradeSettlement}");
-            _producer.Produce(OutputTopic,
-                new Message<string, TradeSettlement> {Key = symbol, Value = tradeSettlement},
-                (deliveryReport) =>
-                {
-                    if (deliveryReport.Error.Code != ErrorCode.NoError)
-                    {
-                        logger.LogError($"Problem producing record: {deliveryReport.Error.Reason}");
-                    }
-                    else
-                    {
-                        logger.LogInformation(
-                            $"Produced record to {deliveryReport.Topic} at offset {deliveryReport.Offset} with timestamp {deliveryReport.Timestamp.UtcDateTime}");
-                    }
-                });
-            numberRecords++;
+            var tradeSettlementEvent = new KafkaEventData<string, TradeSettlement>()
+            {
+                Key = user,
+                Value = tradeSettlement
+            }; 
+            
+          outputRecords.AddAsync(tradeSettlementEvent);
+           numberRecords++;
         }
         logger.LogInformation($"Processed {numberRecords} records");
-        _producer.Flush();
     }
 }
