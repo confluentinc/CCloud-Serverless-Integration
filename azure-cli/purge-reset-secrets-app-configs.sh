@@ -10,7 +10,8 @@ fi
 OLD_KEYS=$(az keyvault secret list --vault-name "$KEY_VAULT" | jq -r '.[].name')
 
 if [ -n "$OLD_KEYS" ]; then
-  echo "Retrieved previous secret keys for deleting ${OLD_KEYS}"
+  echo "Retrieved previous secret keys for deleting"
+  echo "${OLD_KEYS}"
   echo "Removing the refs for secrets in applications"
   az functionapp config appsettings delete \
      --name "$DIRECT_FUNCTION_NAME" \
@@ -27,14 +28,30 @@ if [ -n "$OLD_KEYS" ]; then
     echo "Deleting ${key}"
     az keyvault secret delete --name "$key" --vault-name "${KEY_VAULT}"
   done
-  echo "Waiting 1 minute for the delete command to sync before purging"
-  sleep 60
 
-  echo "Now purging the keys"
+  echo "Waiting for all deleted keys to sync"
+  DELETED_KEYS=$(az keyvault secret list-deleted --vault-name "${KEY_VAULT}"  | jq -r '.[].name')
+
+  while [[ "$OLD_KEYS" != "$DELETED_KEYS" ]]; do
+        sleep 30
+        echo "Checking if delete fully synced"
+        DELETED_KEYS=$(az keyvault secret list-deleted --vault-name "${KEY_VAULT}"  | jq -r '.[].name')
+  done
+
+  echo "Delete completed, now purging the keys"
   for key in $OLD_KEYS; do
     echo "Purging ${key}"
     az keyvault secret purge --name "$key" --vault-name "${KEY_VAULT}"
   done
+    
+  echo "Waiting for purge to sync"
+  sleep 60
+  PURGED_KEYS=$(az keyvault secret list-deleted --vault-name "${KEY_VAULT}"  | jq -r '.[].name')
+  while [[ -n "$PURGED_KEYS" ]]; do
+    sleep 30
+    echo "Checking for purge sync again"
+    PURGED_KEYS=$(az keyvault secret list-deleted --vault-name "${KEY_VAULT}"  | jq -r '.[].name')
+ done
 
 else
   echo "No previous keys to delete"
