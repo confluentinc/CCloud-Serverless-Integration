@@ -139,16 +139,25 @@ class PropertiesToJsonTask extends DefaultTask {
         userConfigs.put("quickstart", "USERS")
         userConfigs.put("kafka.topic", "users")
         userConfigs.put("name", "UsersDatagen")
-        Map<String, String> azureAppConfigs = new HashMap<>();
+        Map<String, String> azureAppConfigs = new HashMap<>()
+        Map<String, String> localSettingsConfig = ["IsEncrypted": false]
         azureAppConfigs.remove("security.protocol")
         azureAppConfigs.remove("sasl.mechanisms")
-        azureAppConfigs.put("ccloud-producer-configs", azureProducerCredJsonFileName)
-        azureAppConfigs.put("schema-registry-configs", azureSRCredsJsonFileName)
         azureAppConfigs.put("bootstrap-servers", azureCredentials.get("bootstrap.servers"))
         azureAppConfigs.put("sasl-username", azureCredentials.get("sasl.username"))
         azureAppConfigs.put("sasl-password", azureCredentials.get("sasl.password"))
+        Map<String, String> valuesMap = new HashMap<>(azureAppConfigs)
 
+        azureAppConfigs.put("ccloud-producer-configs", azureProducerCredJsonFileName)
+        azureAppConfigs.put("schema-registry-configs", azureSRCredsJsonFileName)
 
+        valuesMap.put("AzureWebJobsStorage", "")
+        valuesMap.put("FUNCTIONS_WORKER_RUNTIME", "dotnet")
+        String localAzureProducerCredsString = objectMapper.writeValueAsString(azureCredentials)
+        valuesMap.put("ccloud-producer-configs", localAzureProducerCredsString)
+        String localSchemaRegistryCredsString = objectMapper.writeValueAsString(azureSchemaRegistryCredentials)
+        valuesMap.put("schema-registry-configs", localSchemaRegistryCredsString)
+        localSettingsConfig.put("Values", valuesMap)
 
         File destinationJsonFile = new File("aws-cli/aws-ccloud-creds.json")
         File stocktradeDatagenJsonFile = new File("src/main/resources/stocktrade-datagen.json")
@@ -156,13 +165,18 @@ class PropertiesToJsonTask extends DefaultTask {
         File azureProducerCredsJsonFilePath = new File("azure-cli/${azureProducerCredJsonFileName}")
         File azureSRCredsJsonFilePath = new File("azure-cli/${azureSRCredsJsonFileName}")
         File azureAppSettingsJsonFile = new File("azure-cli/azure-app-settings.json")
-        
+        File azureSinkLocalSettings = new File("azure-ccloud/local.settings.json")
+        File azureKafkaDirectLocalSettings = new File("azure-kafka-direct/local.settings.json")
+
         objectMapper.writerWithDefaultPrettyPrinter().writeValue(destinationJsonFile, properties)
         objectMapper.writerWithDefaultPrettyPrinter().writeValue(stocktradeDatagenJsonFile, stocktradeConfigs)
         objectMapper.writerWithDefaultPrettyPrinter().writeValue(userDatagenJsonFile, userConfigs)
         objectMapper.writerWithDefaultPrettyPrinter().writeValue(azureProducerCredsJsonFilePath, azureCredentials)
         objectMapper.writerWithDefaultPrettyPrinter().writeValue(azureSRCredsJsonFilePath, azureSchemaRegistryCredentials)
         objectMapper.writerWithDefaultPrettyPrinter().writeValue(azureAppSettingsJsonFile, azureAppConfigs)
+        objectMapper.writerWithDefaultPrettyPrinter().writeValue(azureSinkLocalSettings, localSettingsConfig)
+        objectMapper.writerWithDefaultPrettyPrinter().writeValue(azureKafkaDirectLocalSettings, localSettingsConfig)
+
     }
 }
 
