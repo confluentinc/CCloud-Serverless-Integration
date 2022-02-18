@@ -49,12 +49,12 @@ public static class AzureDirectKafkaTrigger
             Username = "%sasl-username%",
             Password = "%sasl-password%")]
         KafkaEventData<string, string>[] kafkaEvents,
-        [Kafka("%ccloud-bootstrap-servers%",
+        [Kafka("%bootstrap-servers%",
             OutputTopic,
             Protocol = BrokerProtocol.SaslSsl,
             AuthenticationMode = BrokerAuthenticationMode.Plain,
-            Username = "%ccloud-username%",
-            Password = "%ccloud-secret%")]
+            Username = "%sasl-username%",
+            Password = "%sasl-password%")]
         IAsyncCollector<KafkaEventData<string, TradeSettlement>> outputRecords,
         ILogger logger)
     {
@@ -70,7 +70,7 @@ public static class AzureDirectKafkaTrigger
             var shares = (Int64) trade["QUANTITY"];
             var price = (Int64) trade["PRICE"];    
             var amount = (double) shares * price;  
-            var user = key;         
+            var user = "theUser";         
             var symbol = (string) trade["SYMBOL"]; 
             var timestamp = now.Ticks;
             string disposition;
