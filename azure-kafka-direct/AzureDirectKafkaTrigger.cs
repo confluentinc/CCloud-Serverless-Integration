@@ -41,13 +41,13 @@ public static class AzureDirectKafkaTrigger
 
     [FunctionName("AzureKafkaDirectFunction")]
     public static void KafkaTopicTrigger(
-        [KafkaTrigger("%ccloud-bootstrap-servers%",
+        [KafkaTrigger("%bootstrap-servers%",
             InputTopic,
             ConsumerGroup = "azure-consumer",
             Protocol = BrokerProtocol.SaslSsl,
             AuthenticationMode = BrokerAuthenticationMode.Plain,
-            Username = "%ccloud-username%",
-            Password = "%ccloud-secret%")]
+            Username = "%sasl-username%",
+            Password = "%sasl-password%")]
         KafkaEventData<string, string>[] kafkaEvents,
         ILogger logger)
     {

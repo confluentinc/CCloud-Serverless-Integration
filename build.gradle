@@ -114,6 +114,8 @@ class PropertiesToJsonTask extends DefaultTask {
         azureCredentials.put("bootstrap.servers", (String)properties.get("bootstrap.servers"))
         azureSchemaRegistryCredentials.put("schema.registry.basic.auth.user.info", (String)properties.get("basic.auth.user.info"))
         azureSchemaRegistryCredentials.put("schema.registry.url", (String)properties.get("schema.registry.url"))
+        String azureSRCredsJsonFileName = "azure-schema-registry-creds.json"
+        String azureProducerCredJsonFileName = "azure-ccloud-producer-creds.json"
         // We're doing this because the AWS security manager wants a separate username and password entry for configuring the event source
         def matcher = saslConfig =~ /.*username='([^']*)'.*password='([^']*)'.*/
         if (matcher.find()) {
@@ -126,7 +128,7 @@ class PropertiesToJsonTask extends DefaultTask {
             baseDatagenConfigs.put("kafka.api.key", username)
             baseDatagenConfigs.put("kafka.api.secret", password)
         } else {
-            throw new RuntimeException("AWS security manager requires 'username' and 'password' entries ")
+            throw new RuntimeException("Missing required 'username' and 'password' entries ")
         }
 
         Map<String, String> stocktradeConfigs = new HashMap<>(baseDatagenConfigs)
@@ -137,18 +139,30 @@ class PropertiesToJsonTask extends DefaultTask {
         userConfigs.put("quickstart", "USERS")
         userConfigs.put("kafka.topic", "users")
         userConfigs.put("name", "UsersDatagen")
+        Map<String, String> azureAppConfigs = new HashMap<>();
+        azureAppConfigs.remove("security.protocol")
+        azureAppConfigs.remove("sasl.mechanisms")
+        azureAppConfigs.put("ccloud-producer-configs", azureProducerCredJsonFileName)
+        azureAppConfigs.put("schema-registry-configs", azureSRCredsJsonFileName)
+        azureAppConfigs.put("bootstrap-servers", azureCredentials.get("bootstrap.servers"))
+        azureAppConfigs.put("sasl-username", azureCredentials.get("sasl.username"))
+        azureAppConfigs.put("sasl-password", azureCredentials.get("sasl.password"))
+
+
 
         File destinationJsonFile = new File("aws-cli/aws-ccloud-creds.json")
         File stocktradeDatagenJsonFile = new File("src/main/resources/stocktrade-datagen.json")
         File userDatagenJsonFile = new File("src/main/resources/user-datagen.json")
-        File azureCredsJsonFile = new File("azure-ccloud/azure-ccloud-creds.json")
-        File azureSRCredsJsonFile = new File("azure-ccloud/azure-schema-registry-creds.json")
+        File azureProducerCredsJsonFilePath = new File("azure-cli/${azureProducerCredJsonFileName}")
+        File azureSRCredsJsonFilePath = new File("azure-cli/${azureSRCredsJsonFileName}")
+        File azureAppSettingsJsonFile = new File("azure-cli/azure-app-settings.json")
         
         objectMapper.writerWithDefaultPrettyPrinter().writeValue(destinationJsonFile, properties)
         objectMapper.writerWithDefaultPrettyPrinter().writeValue(stocktradeDatagenJsonFile, stocktradeConfigs)
         objectMapper.writerWithDefaultPrettyPrinter().writeValue(userDatagenJsonFile, userConfigs)
-        objectMapper.writerWithDefaultPrettyPrinter().writeValue(azureCredsJsonFile, azureCredentials)
-        objectMapper.writerWithDefaultPrettyPrinter().writeValue(azureSRCredsJsonFile, azureSchemaRegistryCredentials)
+        objectMapper.writerWithDefaultPrettyPrinter().writeValue(azureProducerCredsJsonFilePath, azureCredentials)
+        objectMapper.writerWithDefaultPrettyPrinter().writeValue(azureSRCredsJsonFilePath, azureSchemaRegistryCredentials)
+        objectMapper.writerWithDefaultPrettyPrinter().writeValue(azureAppSettingsJsonFile, azureAppConfigs)
     }
 }
 

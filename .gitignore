@@ -42,7 +42,8 @@ hs_err_pid*
 
 # InteliJ
 .idea/
-
+azure-cli/local-azure-configs.sh
+azure-cli/*.json
 src/main/resources/confluent.properties
 src/main/resources/stocktrade-datagen.json
 src/main/resources/user-datagen.json
