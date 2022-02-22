@@ -20,6 +20,7 @@ namespace Confluent.Functions
     static class AzureSinkTrigger
     {
         static IProducer<string, TradeSettlement> producer;
+        private static ISerializer<TradeSettlement> _protoSerializer;
         static string outputTopic = "trade-settlements";
 
         static AzureSinkTrigger()
@@ -37,8 +38,9 @@ namespace Confluent.Functions
                 }
 
             var schemaRegistry = new CachedSchemaRegistryClient(schemaRegistryConfig);
+            _protoSerializer = new ProtobufSerializer<TradeSettlement>(schemaRegistry).AsSyncOverAsync();
             producer = new ProducerBuilder<string, TradeSettlement>(producerConfigs)
-                .SetValueSerializer(new ProtobufSerializer<TradeSettlement>(schemaRegistry).AsSyncOverAsync())
+                .SetValueSerializer(_protoSerializer)
                 .Build();
         }
 
