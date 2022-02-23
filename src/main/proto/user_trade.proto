@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package io.confluent.developer.proto;
+option java_outer_classname = "UserTradeProto";
+
+
+
+message UserTrade {
+  string userid = 1;
+  string regionid = 2;
+  int32 quantity = 3;
+  string symbol = 4;
+  int32 price = 5;
+  string account = 6;
+  string side = 7;
+}

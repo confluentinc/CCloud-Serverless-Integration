@@ -16,10 +16,7 @@
     <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="4.0.1" />
   </ItemGroup>
   <ItemGroup>
-    <Avro Include="../src/main/avro/user_trade.avsc" />
-  </ItemGroup>
-  <ItemGroup>
-    <Protobuf Include="../src/main/proto/trade_settlement.proto" GrpcServices="None" />
+    <Protobuf Include="../src/main/proto/*.proto" GrpcServices="None" />
   </ItemGroup>
   <ItemGroup>
     <None Update="host.json">
