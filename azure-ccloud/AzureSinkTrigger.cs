@@ -9,10 +9,10 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Confluent.Kafka;
-using Confluent.Kafka.SyncOverAsync;
 using Confluent.SchemaRegistry;
-using Confluent.SchemaRegistry.Serdes;
 using Io.Confluent.Developer.Proto;
+using Microsoft.Azure.WebJobs.Extensions.Kafka;
+
 
 
 namespace Confluent.Functions
@@ -20,7 +20,9 @@ namespace Confluent.Functions
     static class AzureSinkTrigger
     {
         static IProducer<string, TradeSettlement> producer;
-        static string outputTopic = "trade-settlements";
+        static SchemaRegistry.Serdes.ProtobufSerializer<TradeSettlement> _protoSerializer;
+        private static SerializationContext _serializationContext;
+        const string OutputTopic = "trade-settlements";
 
         static AzureSinkTrigger()
         {
@@ -37,14 +39,21 @@ namespace Confluent.Functions
                 }
 
             var schemaRegistry = new CachedSchemaRegistryClient(schemaRegistryConfig);
-            producer = new ProducerBuilder<string, TradeSettlement>(producerConfigs)
-                .SetValueSerializer(new ProtobufSerializer<TradeSettlement>(schemaRegistry).AsSyncOverAsync())
-                .Build();
+            _protoSerializer = new SchemaRegistry.Serdes.ProtobufSerializer<TradeSettlement>(schemaRegistry);
+            _serializationContext = new SerializationContext(MessageComponentType.Value, OutputTopic);
+
         }
 
         [FunctionName("AzureSinkConnectorTrigger")]
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
+            [Kafka("%bootstrap-servers%",
+                OutputTopic,
+                Protocol = BrokerProtocol.SaslSsl,
+                AuthenticationMode = BrokerAuthenticationMode.Plain,
+                Username = "%sasl-username%",
+                Password = "%sasl-password%")]
+            IAsyncCollector<KafkaEventData<string, byte[]>> outputRecords,
             ILogger log)
         {
             log.LogInformation("C# HTTP trigger function for Azure Sink triggered");
@@ -100,24 +109,17 @@ namespace Confluent.Functions
                 };
 
                 log.LogInformation($"Trade Settlement result {tradeSettlement}");
-                producer.Produce(outputTopic,
-                    new Message<string, TradeSettlement> {Key = symbol, Value = tradeSettlement},
-                    (deliveryReport) =>
-                    {
-                        if (deliveryReport.Error.Code != ErrorCode.NoError)
-                        {
-                            log.LogError($"Problem producing record: {deliveryReport.Error.Reason}");
-                        }
-                        else
-                        {
-                            log.LogInformation(
-                                $"Produced record to {deliveryReport.Topic} at offset {deliveryReport.Offset} with timestamp {deliveryReport.Timestamp.UtcDateTime}");
-                        }
-                    });
-                numberRecords++;
-            }
+                var tradeSettlementBytes = await _protoSerializer.SerializeAsync(tradeSettlement, _serializationContext);
+                var eventData = new KafkaEventData<string, byte[]>()
+                {
+                    Key = symbol,
+                    Value = tradeSettlementBytes
 
-            producer.Flush();
+                };
+                numberRecords++;
+               await outputRecords.AddAsync(eventData);
+            }
+            
             var responseMessage =
                 $"This Azure Sink Connector triggered function executed successfully and it processed {numberRecords} records";
             return new OkObjectResult(responseMessage);

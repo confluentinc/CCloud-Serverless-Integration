@@ -1,0 +1,14 @@
+{
+  "type":"record",
+  "namespace": "io.confluent.developer.avro",
+  "name":"UserTrade",
+  "fields": [
+    {"name": "userid", "type":"string"},
+    {"name": "regionid", "type": "string"},
+    {"name": "quantity", "type": "int"},
+    {"name": "symbol", "type" : "string"},
+    {"name": "price", "type" : "int"},
+    {"name": "account", "type": "string" },
+    {"name": "side", "type": "string" }
+  ]
+}

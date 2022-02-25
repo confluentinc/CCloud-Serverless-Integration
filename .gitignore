@@ -56,6 +56,7 @@ ccloud_library.sh
 confluent.properties
 *.out
 !gradle/wrapper/gradle-wrapper.jar
+azure-ccloud-notes.txt
 
 
 credentials

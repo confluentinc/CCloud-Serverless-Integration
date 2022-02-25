@@ -5,9 +5,11 @@
     <RootNamespace>azure_kafka_direct</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Apache.Avro" Version="1.11.0" />
+    <PackageReference Include="Confluent.SchemaRegistry.Serdes.Avro" Version="1.8.2" />
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Kafka" Version="3.3.2" />
     <PackageReference Include="Confluent.Kafka" Version="1.8.2" />
-    <PackageReference Include="Microsoft.Azure.Functions.Extensions" Version="1.1.0"/>
+    <PackageReference Include="Microsoft.Azure.Functions.Extensions" Version="1.1.0" />
     <PackageReference Include="Confluent.SchemaRegistry.Serdes.Protobuf" Version="1.8.2" />
     <PackageReference Include="Grpc.Tools" Version="2.43.0" PrivateAssets="All" />
     <PackageReference Include="Google.Protobuf" Version="3.19.4" />
