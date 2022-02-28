@@ -13,15 +13,19 @@ if [ -n "$OLD_KEYS" ]; then
   echo "Retrieved previous secret keys for deleting"
   echo "${OLD_KEYS}"
   echo "Removing the refs for secrets in applications"
-  az functionapp config appsettings delete \
-     --name "$DIRECT_FUNCTION_NAME" \
-     --resource-group "$RESOURCE_GROUP" \
-     --setting-names $OLD_KEYS
 
-  az functionapp config appsettings delete \
-     --name "$SINK_FUNCTION_NAME" \
-     --resource-group "$RESOURCE_GROUP" \
-     --setting-names $OLD_KEYS
+  for functionapp in $(az resource list \
+                       --resource-group "$RESOURCE_GROUP" \
+                       --resource-type Microsoft.Web/sites | jq -r '.[] | .name'); do
+
+    echo "Removing the refs for secrets in application $functionapp"
+    az functionapp config appsettings delete \
+      --name "$functionapp" \
+      --resource-group "$RESOURCE_GROUP" \
+      --setting-names $OLD_KEYS
+    done
+
+
 
   echo "Deleting all secrets"
   for key in $OLD_KEYS; do
@@ -77,18 +81,17 @@ for k in $(jq -r 'to_entries|map("\(.key)=\(.value|tostring)")|.[]' azure-app-se
 done
 
 echo "Now setting the application configs"
-for k in $(az keyvault secret list --vault-name "$KEY_VAULT" | jq -r '.[].name'); do
-  echo "Setting App setting to latest for ${k} in ${DIRECT_FUNCTION_NAME}"
-  az functionapp config appsettings set \
-    --name "$DIRECT_FUNCTION_NAME" \
-    --resource-group "$RESOURCE_GROUP" \
-    --settings "${k}=@Microsoft.KeyVault(SecretUri=https://confluent-cloud-keyvault.vault.azure.net/secrets/${k})"
-    
-  echo "Now in ${SINK_FUNCTION_NAME}"
-  az functionapp config appsettings set \
-    --name "$SINK_FUNCTION_NAME" \
-    --resource-group "$RESOURCE_GROUP" \
-    --settings "${k}=@Microsoft.KeyVault(SecretUri=https://confluent-cloud-keyvault.vault.azure.net/secrets/${k})";
-  
+
+for functionapp in $(az resource list \
+                     --resource-group "$RESOURCE_GROUP" \
+                     --resource-type Microsoft.Web/sites | jq -r '.[] | .name'); do
+
+  for k in $(az keyvault secret list --vault-name "$KEY_VAULT" | jq -r '.[].name'); do
+    echo "Setting App setting to latest for ${k} in ${functionapp}"
+    az functionapp config appsettings set \
+      --name "$functionapp" \
+      --resource-group "$RESOURCE_GROUP" \
+      --settings "${k}=@Microsoft.KeyVault(SecretUri=https://confluent-cloud-keyvault.vault.azure.net/secrets/${k})"
+   done
 done
 

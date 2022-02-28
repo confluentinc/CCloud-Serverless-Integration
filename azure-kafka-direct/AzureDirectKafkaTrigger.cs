@@ -16,17 +16,20 @@ public static class AzureDirectKafkaTrigger
 {
     private const string InputTopic = "user_trades";
     const string OutputTopic = "trade-settlements";
-    static ISerializer<TradeSettlement> _protoSerializer;
+    static IProducer<string, TradeSettlement> _producer;
     static IDeserializer<UserTrade> _protoDeserializer;
+    private static string rawConfigJson;
     static string rawSchemaRegistryConfigs;
-    static SerializationContext _produceSerializationContext;
     private static SerializationContext _consumeSerializationContext;
     
 
     static AzureDirectKafkaTrigger()
     {
+        rawConfigJson = Environment.GetEnvironmentVariable("ccloud-producer-configs");
         rawSchemaRegistryConfigs = Environment.GetEnvironmentVariable("schema-registry-configs");
         var schemaConfigs = JsonConvert.DeserializeObject<Dictionary<string, string>>(rawSchemaRegistryConfigs);
+        var producerConfigs = JsonConvert.DeserializeObject<Dictionary<string, string>>(rawConfigJson);
+
         var schemaRegistryConfig = new SchemaRegistryConfig();
         foreach (var configEntry in schemaConfigs)
         {
@@ -34,10 +37,12 @@ public static class AzureDirectKafkaTrigger
         }
 
         var schemaRegistry = new CachedSchemaRegistryClient(schemaRegistryConfig);
-        _protoSerializer = new Confluent.SchemaRegistry.Serdes.ProtobufSerializer<TradeSettlement>(schemaRegistry).AsSyncOverAsync();
+        _producer = new ProducerBuilder<string, TradeSettlement>(producerConfigs)
+            .SetValueSerializer(new Confluent.SchemaRegistry.Serdes.ProtobufSerializer<TradeSettlement>(schemaRegistry)
+                .AsSyncOverAsync())
+            .Build();
         _protoDeserializer = new Confluent.SchemaRegistry.Serdes.ProtobufDeserializer<UserTrade>().AsSyncOverAsync();
         _consumeSerializationContext = new SerializationContext(MessageComponentType.Value, InputTopic);
-        _produceSerializationContext = new SerializationContext(MessageComponentType.Value, OutputTopic);
     }
 
     [FunctionName("AzureKafkaDirectFunction")]
@@ -50,16 +55,10 @@ public static class AzureDirectKafkaTrigger
             Username = "%sasl-username%",
             Password = "%sasl-password%")]
         KafkaEventData<string, byte[]>[] incomingKafkaEvents,
-        [Kafka("%bootstrap-servers%",
-            OutputTopic,
-            Protocol = BrokerProtocol.SaslSsl,
-            AuthenticationMode = BrokerAuthenticationMode.Plain,
-            Username = "%sasl-username%",
-            Password = "%sasl-password%")]
-        IAsyncCollector<KafkaEventData<string, byte[]>> outgoingKafkaEvents,
         ILogger logger)
     {
-        var numberRecords = 0;
+        var numberRecordsProcessed = 0;
+        logger.LogInformation($"The number of records in the consumed batch {incomingKafkaEvents.Length} ");
         foreach (var kafkaEvent in incomingKafkaEvents)
         {
             var key = kafkaEvent.Key;
@@ -107,18 +106,24 @@ public static class AzureDirectKafkaTrigger
                 Timestamp = timestamp
             };
 
-            logger.LogInformation($"Trade Settlement result {tradeSettlement}");
-            var tradeSettlementBytes = _protoSerializer.Serialize(tradeSettlement, _produceSerializationContext);
-            var eventData = new KafkaEventData<string, byte[]>()
-            {
-                Key = symbol,
-                Value = tradeSettlementBytes
-
-            };
-            
-          outgoingKafkaEvents.AddAsync(eventData);
-           numberRecords++;
+            //logger.LogInformation($"Trade Settlement result {tradeSettlement}");
+            _producer.Produce(OutputTopic,
+                new Message<string, TradeSettlement> {Key = symbol, Value = tradeSettlement},
+                (deliveryReport) =>
+                {
+                    if (deliveryReport.Error.Code != ErrorCode.NoError)
+                    {
+                        logger.LogError($"Problem producing record: {deliveryReport.Error.Reason}");
+                    }
+                    // else
+                    // {
+                    //     logger.LogInformation(
+                    //         $"Produced record to {deliveryReport.Topic} at offset {deliveryReport.Offset} with timestamp {deliveryReport.Timestamp.UtcDateTime}");
+                    // }
+                });
+            numberRecordsProcessed++;
         }
-        logger.LogInformation($"Processed {numberRecords} records");
+        logger.LogInformation($"Processed {numberRecordsProcessed} records");
+        _producer.Flush();
     }
 }
