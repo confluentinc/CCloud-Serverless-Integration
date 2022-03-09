@@ -11,7 +11,9 @@
     
     "extensions": {
         "kafka" : {
-            "maxBatchSize": 200
+            "maxBatchSize": 200,
+            "ExecutorChannelCapacity": 2,
+            "ChannelFullRetryIntervalInMs": 50
         }
     }
 }
