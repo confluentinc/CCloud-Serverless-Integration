@@ -123,7 +123,7 @@ public static class AzureDirectKafkaTrigger
                 });
             numberRecordsProcessed++;
         }
-        logger.LogInformation($"Processed {numberRecordsProcessed} records");
+        logger.LogInformation($"Processed {numberRecordsProcessed} records with embedded standalone producer");
         _producer.Flush();
     }
 }
