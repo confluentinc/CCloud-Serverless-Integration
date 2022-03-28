@@ -24,4 +24,36 @@ az functionapp create \
   --storage-account "$STORAGE_ACCOUNT" \
   --plan "$PLAN_NAME" \
   --resource-group "$RESOURCE_GROUP" \
-  --functions-version 4
+  --functions-version 4                     ``
+
+echo "Create the application zip for deployment"
+./build_and_deploy_app.sh
+
+echo "Enable Runtime Scale Monitoring"
+az resource update --resource-group "$RESOURCE_GROUP" \
+                   --name "$DIRECT_FUNCTION_NAME"/config/web --set properties.functionsRuntimeScaleMonitoringEnabled=1 \
+                   --resource-type Microsoft.Web/sites
+
+echo "Stop app until credentials can be propagated"
+az functionapp stop \
+   --name "$DIRECT_FUNCTION_NAME" \
+   --resource-group "$RESOURCE_GROUP"
+
+echo "Get a system assigned ID"
+PRINCIPAL_ID=$(az functionapp identity assign \
+    --resource-group "$RESOURCE_GROUP" \
+    --name "$DIRECT_FUNCTION_NAME" | jq -r '.principalId')
+
+echo "Add application system id to key-vault for access to credentials"
+az keyvault set-policy --name  "$KEY_VAULT" \
+   --resource-group "$RESOURCE_GROUP" \
+   --object-id "$PRINCIPAL_ID" \
+   --secret-permissions get list
+
+echo "Set secrets for Confluent Cloud access"
+./purge-reset-secrets-app-configs.sh
+
+echo "Start the application"
+az functionapp start \
+   --name "$DIRECT_FUNCTION_NAME" \
+   --resource-group "$RESOURCE_GROUP"
