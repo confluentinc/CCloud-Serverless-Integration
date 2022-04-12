@@ -21,3 +21,17 @@ echo "Now Deleting the functionapp plan, otherwise leaving the plan could incur 
      --resource-group "$RESOURCE_GROUP" \
      --subscription "$SUBSCRIPTION_NAME" \
      --yes
+
+echo "Removing the key vault"
+ az keyvault delete --name "$KEY_VAULT" \
+                    --resource-group "$RESOURCE_GROUP"
+
+ echo "Removing the storage account"
+ az storage account delete \
+          --name "$STORAGE_ACCOUNT" \
+          --resource-group "$RESOURCE_GROUP" \
+          --yes
+
+ echo "Removing the resource group"
+ az group delete --resource-group "$RESOURCE_GROUP" \
+                 --yes

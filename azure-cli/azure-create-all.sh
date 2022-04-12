@@ -7,6 +7,26 @@ fi
 
 . ./azure-configs.sh
 
+echo "Creating resource group"
+az group create --location "$LOCATION" \
+                --resource-group "$RESOURCE_GROUP"
+
+echo "Pause 10 seconds for the group creation to sync"
+sleep 10
+
+echo "Creating a storage account"
+az storage account create \
+  --name "$STORAGE_ACCOUNT"\
+  --resource-group "$RESOURCE_GROUP" \
+  --location "$LOCATION" \
+  --sku Standard_RAGRS \
+  --kind StorageV2
+
+echo "Creating the key vault"
+az keyvault create --location "$LOCATION" \
+                    --name "$KEY_VAULT" \
+                    --resource-group "$RESOURCE_GROUP"
+
 echo "Creating the function app premium plan"
 az functionapp plan create \
   --name "$PLAN_NAME" \
@@ -15,16 +35,16 @@ az functionapp plan create \
   --max-burst 100 \
   --sku EP1
 
-echo "Pause 5 seconds for the functionapp plan to sync"
+echo "Pause 5 seconds for the function app plan to sync"
 sleep 5
 
-echo "Creating the functionapp $DIRECT_FUNCTION_NAME"
+echo "Creating the function app $DIRECT_FUNCTION_NAME"
 az functionapp create \
   --name "$DIRECT_FUNCTION_NAME" \
   --storage-account "$STORAGE_ACCOUNT" \
   --plan "$PLAN_NAME" \
   --resource-group "$RESOURCE_GROUP" \
-  --functions-version 4                     ``
+  --functions-version 4
 
 echo "Create the application zip for deployment"
 ./build_and_deploy_app.sh

@@ -29,7 +29,7 @@ public static class AzureDirectKafkaTrigger
         rawSchemaRegistryConfigs = Environment.GetEnvironmentVariable("schema-registry-configs");
         var schemaConfigs = JsonConvert.DeserializeObject<Dictionary<string, string>>(rawSchemaRegistryConfigs);
         var producerConfigs = JsonConvert.DeserializeObject<Dictionary<string, string>>(rawConfigJson);
-
+        producerConfigs.Add("client.id", "Confluent-Azure-Producer");
         var schemaRegistryConfig = new SchemaRegistryConfig();
         foreach (var configEntry in schemaConfigs)
         {
