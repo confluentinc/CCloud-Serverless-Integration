@@ -5,9 +5,9 @@
 * Gradle 7.0
 * jq
 * A user account in [Confluent Cloud](https://www.confluent.io/confluent-cloud/tryfree/)
-* Local installation of [Confluent CLI](https://docs.confluent.io/confluent-cli/current/install.html) v2.5.0 or later
+* Local installation of [Confluent CLI](https://docs.confluent.io/confluent-cli/current/install.html) v2.10.0 or later
 * A user account in [AWS](https://aws.amazon.com/)
-* Local installation of [AWS CLI](https://aws.amazon.com/cli/) version 2.2.30
+* Local installation of [AWS CLI](https://aws.amazon.com/cli/) version 2.4 or later
 
 
 ### Setup
