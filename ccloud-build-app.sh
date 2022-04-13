@@ -25,10 +25,10 @@ function validateVersions() {
   JQ_VERSION=$(jq --version | cut -d '-' -f 2)
   AWS_VERSION=$( aws --version | cut -d '/' -f 2 | cut -d ' ' -f 1)
 
-  MIN_CONFLUENT=2.3.1
+  MIN_CONFLUENT=2.10.1
   MIN_GRADLE=7.0
   MIN_JQ=1.6
-  MIN_AWS=2.2.30
+  MIN_AWS=2.4.0
 
   if [[ $(compareVersions $CONFLUENT_VERSION $MIN_CONFLUENT) -eq 0 ]]; then
      BAD_VERSIONS="TRUE"
