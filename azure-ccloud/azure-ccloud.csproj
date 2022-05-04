@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <AzureFunctionsVersion>v4</AzureFunctionsVersion>
+    <RootNamespace>azure_ccloud</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Apache.Avro" Version="1.11.0" />
+    <PackageReference Include="Confluent.SchemaRegistry.Serdes.Avro" Version="1.8.2" />
+    <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="4.0.1" />
+    <PackageReference Include="Confluent.Kafka" Version="1.8.2" />
+    <PackageReference Include="Microsoft.Azure.Functions.Extensions" Version="1.1.0" />
+    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Kafka" Version="3.3.2" />
+    <PackageReference Include="Confluent.SchemaRegistry.Serdes.Protobuf" Version="1.8.2" />
+    <PackageReference Include="Grpc.Tools" Version="2.43.0" PrivateAssets="All" />
+    <PackageReference Include="Google.Protobuf" Version="3.19.4" /> 
+  </ItemGroup>
+  <ItemGroup>
+    <Protobuf Include="../src/main/proto/trade_settlement.proto" GrpcServices="None" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="host.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="local.settings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </None>
+  </ItemGroup>
+</Project>
