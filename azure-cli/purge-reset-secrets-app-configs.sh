@@ -91,7 +91,7 @@ for functionapp in $(az resource list \
     az functionapp config appsettings set \
       --name "$functionapp" \
       --resource-group "$RESOURCE_GROUP" \
-      --settings "${k}=@Microsoft.KeyVault(SecretUri=https://confluent-cloud-keyvault.vault.azure.net/secrets/${k})"
+      --settings "${k}=@Microsoft.KeyVault(SecretUri=https://${KEY_VAULT}.vault.azure.net/secrets/${k})"
    done
 done
 

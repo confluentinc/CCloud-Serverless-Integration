@@ -6,18 +6,24 @@
 * jq
 * A user account in [Confluent Cloud](https://www.confluent.io/confluent-cloud/tryfree/)
 * Local installation of [Confluent CLI](https://docs.confluent.io/confluent-cli/current/install.html) v2.10.0 or later
+
+For the AWS portion of the sample code you'll need
 * A user account in [AWS](https://aws.amazon.com/)
 * Local installation of [AWS CLI](https://aws.amazon.com/cli/) version 2.4 or later
+
+For the Azure section you'll need the following
+* [.NET version 6.0](https://dotnet.microsoft.com/en-us/download) 
+* A user account on [Azure](https://azure.microsoft.com/en-us/free/) and then create [a subscription](https://docs.microsoft.com/en-us/azure/cost-management-billing/manage/create-subscription#create-a-subscription-in-the-azure-portal)
+* Local installation of the [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli) version v2.36 or later
 
 
 ### Setup
 
 To run this demo, you'll need a Kafka cluster, a ksqlDB application and two datagen source connectors.  The source connectors will generate two event streams that the ksqlDB will join and write
-out to a topic, `user_trades`.  Then an AWS Lambda, using the `user_trades` as an event source will take some additional action and produce results back to the Kafka cluster in Confluent Cloud.
+out to a topic, `user_trades`.  Then an AWS Lambda or Azure Function, using the `user_trades` as an event source will take some additional action and produce results back to the Kafka cluster in Confluent Cloud.
 Using a lambda in this way is a proxy for a User Defined Function (UDF) with ksqlDB in Confluent Cloud.
 
-But before you run the demo, you'll need to set up some resources on Confluent Cloud and AWS.  We've provided some scripts in this repository to keep the amount of work you need to do
-at a minimum, but you need to the setup portion first.
+But before you run the demo, you'll need to set up some resources on Confluent Cloud and AWS or Azure.  We've provided some scripts in this repository to keep the amount of work you need to do at a minimum.
 
 The following sections provide details for setting up a cluster on Confluent Cloud and creating an AWS Lambda to process events from ksqlDB
 
@@ -25,15 +31,19 @@ The following sections provide details for setting up a cluster on Confluent Clo
 
 **_NOTE:_** This part assumes you have already set up an account on [Confluent Cloud](https://confluent.cloud/) and you've installed the [Confluent CLI](https://docs.confluent.io/confluent-cli/current/install.html).
 
-To create the Kafka cluster, ksqlDB application, and the datagen sink connectors you'll run this command from the base directory of this repository
-
+To create the Kafka cluster, ksqlDB application, and the datagen sink connectors you'll run a command from the base directory of this repository
+If you're running the AWS example you'll run:
 ```shell
  ./ccloud-build-app.sh
+```
+And if you're going to use Azure you'll run this command:
+```shell
+./ccloud-build-app-azure.sh
 ```
      
 This script relies on the open source library [ccloud_library.sh](https://github.com/confluentinc/examples/blob/latest/utils/ccloud_library.sh), and will download it the first time you run the command.
 
-The [ccloud-build-app script](ccloud-build-app.sh) script performs several tasks which I'll highlight here. If you want to skip the details, once the script complete the next step you'll need to take is specified in the [AWS Lambda and required resources](#create-the-aws-lambda) section.
+The [ccloud-build-app script](ccloud-build-app.sh) script performs several tasks which I'll highlight here. If you want to skip the details, once the script complete the next step you'll need to take the steps outlined in either the [Creating the AWS Lambda](#create-the-aws-lambda) or the [Creating the Azure Function](#create-the-azure-function) sections.
 
 **_NB: The script performs these steps, the details are here for you to follow along with what's happening while it runs_**
 
@@ -166,93 +176,6 @@ The script will prompt you to enter `y` or `n` to confirm your choice.
    2. An AWS Role with an attached policy with all the required permissions for the Lambda to execute properly
    3. Finally, an AWS Lambda instance with an event sources mapped to the Confluent Cloud topic `user_trades` which contains the results of the ksqlDB join
 
-The script output will resemble this:
-<details>
-<summary> Click to view script output</summary>
-
-```json
-  Create the AWS secrets config to hold connection information
-{
-    "ARN": "arn:aws:secretsmanager:us-west-2:343223495109:secret:CCloudLambdaCredentials-r4ZblI",
-    "Name": "CCloudLambdaCredentials",
-    "VersionId": "c90d898c-9e5c-4c64-b82d-47dd07fb7b95"
-}
-Create the role needed for the lambda
-{
-    "Role": {
-        "Path": "/",
-        "RoleName": "CCloud-lambda-role",
-        "RoleId": "AROAU72NW5HCWTBO5LDHI",
-        "Arn": "arn:aws:iam::343223495109:role/CCloud-lambda-role",
-        "CreateDate": "2021-08-31T13:52:30+00:00",
-        "AssumeRolePolicyDocument": {
-            "Version": "2012-10-17",
-            "Statement": [
-                {
-                    "Effect": "Allow",
-                    "Principal": {
-                        "Service": "lambda.amazonaws.com"
-                    },
-                    "Action": "sts:AssumeRole"
-                }
-            ]
-        }
-    }
-}
-Add policy file inline (inline policy means other roles can't reuse the policy by AWS arn)
-Waiting for 10 seconds for the role and policy to sync
-Create the lambda
-{
-    "FunctionName": "CCloudLambdaIntegrationFunction",
-    "FunctionArn": "arn:aws:lambda:us-west-2:343223495109:function:CCloudLambdaIntegrationFunction",
-    "Runtime": "java11",
-    "Role": "arn:aws:iam::343223495109:role/CCloud-lambda-role",
-    "Handler": "io.confluent.developer.CCloudStockRecordHandler::handleRequest",
-    "CodeSize": 35995756,
-    "Description": "",
-    "Timeout": 600,
-    "MemorySize": 512,
-    "LastModified": "2021-08-31T13:52:47.006+0000",
-    "CodeSha256": "B0RSUj8X9Jk+JlfcmbKoJiDe9tr+fK9H4Vv5gYhAeSk=",
-    "Version": "$LATEST",
-    "TracingConfig": {
-        "Mode": "PassThrough"
-    },
-    "RevisionId": "afaef24a-b814-4113-8ddd-998a0d9ffc64",
-    "State": "Active",
-    "LastUpdateStatus": "Successful",
-    "PackageType": "Zip"
-}
-Adding a CCloud topic as an event source
-{
-    "UUID": "4f3329bc-f439-42b4-8292-6f6e8fa2ff92",
-    "StartingPosition": "TRIM_HORIZON",
-    "BatchSize": 100,
-    "FunctionArn": "arn:aws:lambda:us-west-2:343223495109:function:CCloudLambdaIntegrationFunction",
-    "LastModified": "2021-08-31T09:52:48.694000-04:00",
-    "LastProcessingResult": "No records processed",
-    "State": "Creating",
-    "StateTransitionReason": "USER_INITIATED",
-    "Topics": [
-        "user_trades"
-    ],
-    "SourceAccessConfigurations": [
-        {
-            "Type": "BASIC_AUTH",
-            "URI": "arn:aws:secretsmanager:us-west-2:343223495109:secret:CCloudLambdaCredentials"
-        }
-    ],
-    "SelfManagedEventSource": {
-        "Endpoints": {
-            "KAFKA_BOOTSTRAP_SERVERS": [
-                "pkc-pgq85.us-west-2.aws.confluent.cloud:9092"
-            ]
-        }
-    }
-}
-```
-</details> 
-
 5. To confirm the lambda is working
    1. Run this command to view the events for the Lambda
    ```shell
@@ -261,8 +184,44 @@ Adding a CCloud topic as an event source
       If there isn't any output wait a few minutes and run it again.  Note this command only shows events from the latest log file.
    2. Go to the Confluent Cloud Console and click on the `Stream Lineage` link you should see something like this
     ![Dataflow to Lambda image](images/pushing-data-from-ccloud.png)
+
+### Create the Azure Function
+
+For the Azure function, it is assumed that you've already configured the [Azure CLI tool](https://docs.microsoft.com/en-us/cli/azure/get-started-with-azure-cli).
+Next you'll run a script which will set up all the required Azure resources and create an Azure Function application.  When you ran the  `ccloud-build-app-azure.sh` command, it also created all the configs required to build the Azure Function application.
+
+1. Run the [azure-create-all.sh](azure-cli/azure-create-all.sh) script in the `azure-cli` directory.
+  ```shell
+  (cd azure-cli && ./azure-create-all.sh) 
+   ````
+
+The script will prompt you with a menu to choose the application type to create:
+```shell
+Select the application type to build
+1) kafka-direct-trigger
+2) sink-connector-trigger
+#?
+```
+enter either `1` or `2` to proceed. 
+The first choice builds an Azure Function that uses a topic on Confluent Cloud as an event source and the second menu option builds an application that requires you to use the [Azure Sink Connector](https://docs.confluent.io/cloud/current/connectors/cc-azure-functions-sink.html).  This README describes using option 1, the Kafka topic direct event trigger, but the steps for the sink function application are the same except enabling the sink connector on Confluent Cloud.
+Note that using the first option on the menu creates an Azure Function on the [Azure Function Premium Plan](https://docs.microsoft.com/en-us/azure/azure-functions/functions-premium-plan?tabs=portal) which has a different pricing plan where costs accrue while the function application is deployed, regardless if it executes or not.
+
+2. The script creates the following components on Azure
+    1. A [Resource Group](https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/manage-resource-groups-portal#what-is-a-resource-group) which is a container for related resources on Azure.
+    2. An [Azure Storage account](https://docs.microsoft.com/en-us/azure/storage/common/storage-account-overview)
+    3. [Key Vault](https://docs.microsoft.com/en-us/azure/key-vault/general/basic-concepts) instance used for storing the credentials necessary to connect to Confluent for running the application.  Note that the script handles getting all the configurations generated in the first step into the key vault automatically for you.
+    4. Finally, the Azure Function application using the Confluent Cloud topic `user_trades` (which contains the results of the ksqlDB join) as an event source.
+
+3. To confirm the Azure Function is working
+    1. Run this command to view the events for the Lambda
+   ```shell
+    func azure functionapp logstream AzureKafkaDirectFunctionApp
+    ```
+   If there isn't any output wait a few minutes and run it again.
+    2. Go to the Confluent Cloud Console and click on the `Stream Lineage` link you should see something like this
+       ![Dataflow to Lambda image](images/pushing-data-from-ccloud.png)
    
-### Run the ksqlDB queries to process Lambda results
+### Run the ksqlDB queries to process Lambda/Azure Function results
 
 Next you'll run a series of queries in the [lambda-processing-statements.sql](src/main/resources/lambda-processing-statements.sql) file so the ksqlDB application can provide some 
 analysis of the results from the Lambda. 
@@ -301,14 +260,22 @@ The results of loading these sql statements will look like (details truncated fo
 
 ### Clean Up
 
-Since both the Confluent Cloud and AWS resources cost money, it's important to fully remove all compents in both cloud environments.
+Since both the Confluent Cloud, AWS and Azure resources cost money, it's important to fully remove all components in the cloud environments.
 
 #### Remove up all AWS resources
 To remove all the AWS components you'll run the [aws-delete-all.sh](aws-cli/aws-delete-all.sh) script.
 1. Run this commands to clean up the AWS components
     ```shell 
      (cd aws-cli && ./aws-delete-all.sh) 
+    ```     
+
+#### Remove up all Azure resources
+To remove all the Azure components you'll run the [azure-delete-all.sh](azure-cli/azure-delete-all.sh) script. This script will also prompt you with a menu, simply select the same option when creating the Azure Function.
+1. Run this commands to clean up the Azure components
+    ```shell 
+     (cd azure-cli && ./azure-delete-all.sh) 
     ```  
+   
 #### Remove up all Confluent Cloud resources
 To remove the Confluent Cloud components do the following:
 1. **_Open a new terminal window_** and go to the root directory of the repository

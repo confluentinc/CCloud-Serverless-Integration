@@ -95,7 +95,7 @@ protobuf {
 class PropertiesToJsonTask extends DefaultTask {
     @TaskAction
     def propsToJson() {
-        Map<String, String> baseDatagenConfigs = ["connector.class":"DatagenSource", "output.data.format":"JSON", "tasks.max":"1", "max.interval":"1"]
+        Map<String, String> baseDatagenConfigs = ["connector.class":"DatagenSource", "output.data.format":"JSON", "tasks.max":"1", "max.interval":"100"]
         ObjectMapper objectMapper = new ObjectMapper();
         Properties properties = new Properties();
         // We do this to always grab the latest java-service-configs file from the stack-configs directory if previous ones aren't deleted
@@ -115,7 +115,7 @@ class PropertiesToJsonTask extends DefaultTask {
         azureSchemaRegistryCredentials.put("schema.registry.basic.auth.user.info", (String)properties.get("basic.auth.user.info"))
         azureSchemaRegistryCredentials.put("schema.registry.url", (String)properties.get("schema.registry.url"))
         String azureSRCredsJsonFileName = "azure-schema-registry-creds.json"
-        String azureProducerCredJsonFileName = "azure-ccloud-producer-creds.json"
+        String azureProducerCredJsonFileName = "azure-ccloud-kafka-direct-producer-creds.json"
         // We're doing this because the AWS security manager wants a separate username and password entry for configuring the event source
         def matcher = saslConfig =~ /.*username='([^']*)'.*password='([^']*)'.*/
         if (matcher.find()) {
@@ -165,8 +165,8 @@ class PropertiesToJsonTask extends DefaultTask {
         File azureProducerCredsJsonFilePath = new File("azure-cli/${azureProducerCredJsonFileName}")
         File azureSRCredsJsonFilePath = new File("azure-cli/${azureSRCredsJsonFileName}")
         File azureAppSettingsJsonFile = new File("azure-cli/azure-app-settings.json")
-        File azureSinkLocalSettings = new File("azure-ccloud/local.settings.json")
-        File azureKafkaDirectLocalSettings = new File("azure-kafka-direct/local.settings.json")
+        File azureSinkLocalSettings = new File("azure-ccloud-sink-connector/local.settings.json")
+        File azureKafkaDirectLocalSettings = new File("azure-ccloud-kafka-direct/local.settings.json")
 
         objectMapper.writerWithDefaultPrettyPrinter().writeValue(destinationJsonFile, properties)
         objectMapper.writerWithDefaultPrettyPrinter().writeValue(stocktradeDatagenJsonFile, stocktradeConfigs)
