@@ -213,11 +213,10 @@ Note that using the first option on the menu creates an Azure Function on the [A
     4. Finally, the Azure Function application using the Confluent Cloud topic `user_trades` (which contains the results of the ksqlDB join) as an event source.
 
 3. To confirm the Azure Function is working
-    1. Run this command to view the events for the Lambda
+    1. Run this command to view the events for the Azure Function:
    ```shell
     func azure functionapp logstream AzureKafkaDirectFunctionApp
     ```
-   If there isn't any output wait a few minutes and run it again.
     2. Go to the Confluent Cloud Console and click on the `Stream Lineage` link you should see something like this
        ![Dataflow to Lambda image](images/pushing-data-from-ccloud.png)
    
