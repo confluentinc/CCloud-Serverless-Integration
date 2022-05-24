@@ -16,12 +16,13 @@ public static class AzureDirectKafkaTrigger
 {
     private const string InputTopic = "user_trades";
     const string OutputTopic = "trade-settlements";
-    static IProducer<string, TradeSettlement> _producer;
     static IDeserializer<UserTrade> _protoDeserializer;
+    private static ISerializer<TradeSettlement> _protoSerializer;
     private static string rawConfigJson;
     static string rawSchemaRegistryConfigs;
     private static SerializationContext _consumeSerializationContext;
-    
+    private static SerializationContext _produceSerializationContext;
+
 
     static AzureDirectKafkaTrigger()
     {
@@ -37,12 +38,11 @@ public static class AzureDirectKafkaTrigger
         }
 
         var schemaRegistry = new CachedSchemaRegistryClient(schemaRegistryConfig);
-        _producer = new ProducerBuilder<string, TradeSettlement>(producerConfigs)
-            .SetValueSerializer(new Confluent.SchemaRegistry.Serdes.ProtobufSerializer<TradeSettlement>(schemaRegistry)
-                .AsSyncOverAsync())
-            .Build();
         _protoDeserializer = new Confluent.SchemaRegistry.Serdes.ProtobufDeserializer<UserTrade>().AsSyncOverAsync();
         _consumeSerializationContext = new SerializationContext(MessageComponentType.Value, InputTopic);
+        _protoSerializer = new Confluent.SchemaRegistry.Serdes.ProtobufSerializer<TradeSettlement>(schemaRegistry)
+            .AsSyncOverAsync();
+        _produceSerializationContext = new SerializationContext(MessageComponentType.Value, OutputTopic);
     }
 
     [FunctionName("AzureKafkaDirectFunction")]
@@ -55,6 +55,13 @@ public static class AzureDirectKafkaTrigger
             Username = "%sasl-username%",
             Password = "%sasl-password%")]
         KafkaEventData<string, byte[]>[] incomingKafkaEvents,
+        [Kafka("%bootstrap-servers%",
+            OutputTopic,
+            Protocol = BrokerProtocol.SaslSsl,
+            AuthenticationMode = BrokerAuthenticationMode.Plain,
+            Username = "%sasl-username%",
+            Password = "%sasl-password%")]
+        IAsyncCollector<KafkaEventData<string, byte[]>> outputRecords,
         ILogger logger)
     {
         var numberRecordsProcessed = 0;
@@ -65,13 +72,13 @@ public static class AzureDirectKafkaTrigger
             var random = new Random();
             var now = DateTime.UtcNow;
             var secInspection = random.Next(100);
-            var userTrade = _protoDeserializer.Deserialize(kafkaEvent.Value,false, _consumeSerializationContext);  
+            var userTrade = _protoDeserializer.Deserialize(kafkaEvent.Value, false, _consumeSerializationContext);
 
             var shares = userTrade.Quantity;
-            var price = userTrade.Price;    
-            var amount = (double) shares * price;  
-            var user = key;         
-            var symbol =  userTrade.Symbol; 
+            var price = userTrade.Price;
+            var amount = (double) shares * price;
+            var user = key;
+            var symbol = userTrade.Symbol;
             var timestamp = now.Ticks;
             string disposition;
             string reason;
@@ -105,25 +112,17 @@ public static class AzureDirectKafkaTrigger
                 Reason = reason,
                 Timestamp = timestamp
             };
-
-            //logger.LogInformation($"Trade Settlement result {tradeSettlement}");
-            _producer.Produce(OutputTopic,
-                new Message<string, TradeSettlement> {Key = symbol, Value = tradeSettlement},
-                (deliveryReport) =>
-                {
-                    if (deliveryReport.Error.Code != ErrorCode.NoError)
-                    {
-                        logger.LogError($"Problem producing record: {deliveryReport.Error.Reason}");
-                    }
-                    // else
-                    // {
-                    //     logger.LogInformation(
-                    //         $"Produced record to {deliveryReport.Topic} at offset {deliveryReport.Offset} with timestamp {deliveryReport.Timestamp.UtcDateTime}");
-                    // }
-                });
+            
+            var tradeSettlementBytes = _protoSerializer.Serialize(tradeSettlement, _produceSerializationContext);
+            var eventData = new KafkaEventData<string, byte[]>()
+            {
+                Key = symbol,
+                Value = tradeSettlementBytes
+            };
+            outputRecords.AddAsync(eventData);
             numberRecordsProcessed++;
         }
-        logger.LogInformation($"Processed {numberRecordsProcessed} records with embedded standalone producer");
-        _producer.Flush();
+
+        logger.LogInformation($"Processed {numberRecordsProcessed} records with output binding");
     }
 }
