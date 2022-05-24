@@ -57,6 +57,7 @@ confluent.properties
 *.out
 !gradle/wrapper/gradle-wrapper.jar
 azure-ccloud-notes.txt
+aws-cli/aws-results.json
 
 
 credentials
