@@ -43,7 +43,7 @@ And if you're going to use Azure you'll run this command:
      
 This script relies on the open source library [ccloud_library.sh](https://github.com/confluentinc/examples/blob/latest/utils/ccloud_library.sh), and will download it the first time you run the command.
 
-The [ccloud-build-app script](ccloud-build-app.sh) script performs several tasks which I'll highlight here. If you want to skip the details, once the script complete the next step you'll need to take the steps outlined in either the [Creating the AWS Lambda](#create-the-aws-lambda) or the [Creating the Azure Function](#create-the-azure-function) sections.
+The [ccloud-build-app](ccloud-build-app.sh) script performs several tasks which I'll highlight here. If you want to skip the details, once the script complete the next step you'll need to take the steps outlined in either the [Creating the AWS Lambda](#create-the-aws-lambda) or the [Creating the Azure Function](#create-the-azure-function) sections.
 
 **_NB: The script performs these steps, the details are here for you to follow along with what's happening while it runs_**
 
