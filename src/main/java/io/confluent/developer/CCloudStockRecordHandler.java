@@ -9,6 +9,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.developer.proto.TradeSettlementProto;
 import io.confluent.developer.proto.TradeSettlementProto.TradeSettlement;
 import io.confluent.developer.proto.TradeSettlementProto.TradeSettlement.Builder;
+import io.confluent.developer.proto.UserTradeProto.UserTrade;
+import io.confluent.kafka.serializers.protobuf.KafkaProtobufDeserializer;
+import io.confluent.kafka.serializers.protobuf.KafkaProtobufDeserializerConfig;
 import io.confluent.kafka.serializers.protobuf.KafkaProtobufSerializer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
@@ -34,6 +37,8 @@ public class CCloudStockRecordHandler implements RequestHandler<Map<String, Obje
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final Map<String, Object> configs = new HashMap<>();
     private final StringDeserializer stringDeserializer = new StringDeserializer();
+    private final KafkaProtobufDeserializer<UserTrade> protobufDeserializer = new KafkaProtobufDeserializer<>();
+    private final Random random;
 
     public CCloudStockRecordHandler() {
         configs.putAll(getSecretsConfigs());
@@ -45,18 +50,19 @@ public class CCloudStockRecordHandler implements RequestHandler<Map<String, Obje
         configs.put(ProducerConfig.CLIENT_DNS_LOOKUP_CONFIG, "use_all_dns_ips");
         configs.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         configs.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaProtobufSerializer.class);
+        configs.put(KafkaProtobufDeserializerConfig.SPECIFIC_PROTOBUF_VALUE_TYPE, UserTrade.class);
         
         producer = new KafkaProducer<>(configs);
         stringDeserializer.configure(configs, false);
+        protobufDeserializer.configure(configs, false);
+        random = new Random();
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public Void handleRequest(Map<String, Object> payload, Context context) {
         LambdaLogger logger = context.getLogger();
-        logger.log("Configs are " + configs);
         Map<String, List<Map<String, String>>> records = (Map<String, List<Map<String, String>>>) payload.get("records");
-
         records.forEach((key, recordList) ->  {
                 logger.log("Topic-Partition for this batch of records " + key +" number records in batch " + recordList.size());
             recordList.forEach(recordMap -> {
@@ -67,16 +73,16 @@ public class CCloudStockRecordHandler implements RequestHandler<Map<String, Obje
                     tradeKey = stringDeserializer.deserialize("", keyBytes);
                 }
                 byte[] bytes = decode(recordMap.get("value"));
-                Map<String, Object> trade = getMapFromString(stringDeserializer.deserialize("", bytes));
+                UserTrade trade = protobufDeserializer.deserialize("", bytes);
                 logger.log("Record key is " + tradeKey + " Record value is " + trade);
                 Instant now = Instant.now();
-                int secInspection = new Random().nextInt(100);
+                int secInspection = random.nextInt(100);
                 Builder builder = TradeSettlement.newBuilder();
-                int shares = (Integer)trade.get("QUANTITY");
-                int price = (Integer)trade.get("PRICE");
+                int shares = trade.getQuantity();
+                int price =  trade.getPrice();
                 builder.setAmount(((double)shares * price));
                 builder.setUser(Objects.requireNonNullElse(tradeKey, "NO USER"));
-                builder.setSymbol((String)trade.get("SYMBOL"));
+                builder.setSymbol(trade.getSymbol());
                 builder.setTimestamp(now.toEpochMilli());
                 String disposition;
                 String reason;
