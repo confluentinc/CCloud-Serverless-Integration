@@ -70,7 +70,7 @@ echo "All versions are good!"
 if test ! -f ccloud_library.sh; then
    echo "The ccloud_library script not found.
    Getting it now via wqet command"
-   wget -O ccloud_library.sh https://raw.githubusercontent.com/confluentinc/examples/latest/utils/ccloud_library.sh
+   wget -O ccloud_library.sh https://raw.githubusercontent.com/confluentinc/examples/master/utils/ccloud_library.sh
 fi
 
 source ./ccloud_library.sh
@@ -93,21 +93,12 @@ MAX_WAIT=720
 echo "Now waiting up to $MAX_WAIT seconds for the ksqlDB cluster to be UP"
 ccloud::retry $MAX_WAIT ccloud::validate_ccloud_ksqldb_endpoint_ready "$KSQLDB_ENDPOINT" || exit 1
 echo "Successfully created ksqlDB"
+
 echo "Now creating topics"
 
 for topic in stocktrade users user_trades trade-settlements; do
     confluent kafka topic create $topic;
   done
-
-
-echo "Now setting ACLs to all the ksqlDB app to use topics"
-ksqlDBAppId=$(confluent ksql app list | grep "$KSQLDB_ENDPOINT" | awk '{print $1}')
-confluent ksql app configure-acls "$ksqlDBAppId" stocktrade users user_trades trade-settlements
-KSQLDB_SERVICE_ACCOUNT_ID=$(confluent kafka cluster list -o json | jq -r '.[0].name' | awk -F'-' '{print $4"-"$5;}')
-confluent kafka acl create --allow --service-account "${KSQLDB_SERVICE_ACCOUNT_ID}" --operation READ --topic stocktrade
-confluent kafka acl create --allow --service-account "${KSQLDB_SERVICE_ACCOUNT_ID}" --operation READ --topic users
-confluent kafka acl create --allow --service-account "${KSQLDB_SERVICE_ACCOUNT_ID}" --operation WRITE --topic user_trades
-confluent kafka acl create --allow --service-account "${KSQLDB_SERVICE_ACCOUNT_ID}" --operation READ --topic trade-settlements
 
 echo "Now generating JSON properties needed for creating datagen connectors and AWS secrets manager"
 echo "For this the script is using custom gradle task 'propsToJson' "
