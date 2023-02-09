@@ -1,3 +1,3 @@
 ## Reporting a Vulnerability
 
-	bugbounty@confluent.io
+	security@confluent.io
